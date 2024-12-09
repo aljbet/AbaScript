@@ -4,7 +4,7 @@ public class AbaScriptCustomVisitor : AbaScriptBaseVisitor<object>
 {
     private readonly Dictionary<string, object> variables = new();
     private readonly Dictionary<string, (List<string> Parameters, AbaScriptParser.BlockContext Body)> functions = new();
-    private readonly Logger logger = new Logger();
+    private readonly Logger logger = new();
 
     public override object VisitVariableDeclaration(AbaScriptParser.VariableDeclarationContext context)
     {
@@ -324,9 +324,13 @@ public class AbaScriptCustomVisitor : AbaScriptBaseVisitor<object>
             }
 
             // Perform the increment step
-            if (context.assignment(1) != null)
+            if (context.variableDeclaration() == null && context.assignment(1) != null)
             {
                 Visit(context.assignment(1));
+            }
+            else if (context.assignment(0) != null)
+            {
+                Visit(context.assignment(0));
             }
         }
         return null;
