@@ -1,4 +1,4 @@
-﻿﻿namespace AbaScript.AntlrClasses;
+﻿namespace AbaScript.AntlrClasses;
 
 public class AbaScriptCustomVisitor : AbaScriptBaseVisitor<object>
 {

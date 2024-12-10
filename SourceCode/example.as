@@ -1,3 +1,4 @@
-﻿for (var i = 0; i < 10; i = i + 1;) {
-    print(i);
-}
+﻿# for (var i = 0; i < 10; i = i + 1;) {
+#     print(i);
+# }
+print(6);
