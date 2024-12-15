@@ -1,30 +1,36 @@
-﻿namespace AbaScript.AntlrClasses;
+﻿using AbaScript.AntlrClasses.Models;
+
+namespace AbaScript.AntlrClasses;
 
 public class AbaScriptCustomVisitor : AbaScriptBaseVisitor<object>
 {
-    private readonly Dictionary<string, object> variables = new();
-    private readonly Dictionary<string, (List<string> Parameters, AbaScriptParser.BlockContext Body)> functions = new();
+    private readonly Dictionary<string, ClassDefinition> classDefinitions = new();
+    private readonly Dictionary<string, ClassInstance> classInstances = new();
+    private readonly Dictionary<string, Variable> variables = new();
+    private readonly Dictionary<string, (List<(string type, string name)> Parameters, string ReturnType, AbaScriptParser.BlockContext Body)> functions = new();
     private readonly Logger logger = new Logger();
 
     public override object VisitVariableDeclaration(AbaScriptParser.VariableDeclarationContext context)
     {
+        var varType = context.type().GetText();
         var varName = context.ID().GetText();
         object value = null;
 
         if (context.NUMBER() != null)
         {
-            // Array declaration with a specified size
             int size = int.Parse(context.NUMBER().GetText());
             value = new object[size];
         }
         else if (context.expr() != null)
         {
-            // Regular variable initialization
             value = Visit(context.expr());
+            if (!CheckType(varType, value))
+                throw new InvalidOperationException($"Переменная {varName} должна быть типа {varType}.");
         }
 
-        variables[varName] = value;
-        logger.Log($"Переменная {varName} объявлена со значением: {value} (тип: {GetType(value)})");
+        var variableType = Enum.Parse<VariableType>(varType, true);
+        variables[varName] = new Variable(variableType, value);
+        logger.Log($"Переменная {varName} объявлена со значением: {value} (тип: {varType})");
         return null;
     }
 
@@ -37,39 +43,63 @@ public class AbaScriptCustomVisitor : AbaScriptBaseVisitor<object>
         if (context.expr() != null)
         {
             var index = (int)Visit(context.expr());
-            var array = (object[])variables[variableName];
+            if (!variables.TryGetValue(variableName, out var variable) || !(variable.Value is object[] array))
+                throw new InvalidOperationException($"Переменная '{variableName}' не объявлена или не является массивом.");
             value = array[index];
         }
         else
         {
-            if (!variables.TryGetValue(variableName, out value))
+            if (!variables.TryGetValue(variableName, out var variable))
                 throw new InvalidOperationException($"Переменная '{variableName}' не объявлена.");
+            value = variable.Value;
         }
 
         return value;
     }
     public override object VisitAssignment(AbaScriptParser.AssignmentContext context)
     {
-        var varName = context.ID().GetText();
+        object value = Visit(context.expr());
 
-        if (context.expr() != null)
+        if (context.fieldAccess() != null)
         {
-            object value;
-            if (context.expr().Length == 2)
+            // Handle field access assignment
+            var instanceName = context.fieldAccess().ID(0).GetText();
+            var fieldName = context.fieldAccess().ID(1).GetText();
+
+            if (!classInstances.TryGetValue(instanceName, out var instance))
+                throw new InvalidOperationException($"Экземпляр '{instanceName}' не существует.");
+
+            var className = instance.GetType().Name;
+            if (!classDefinitions[className].Fields.ContainsKey(fieldName))
+                throw new InvalidOperationException($"Поле '{fieldName}' не определено в классе '{className}'.");
+
+            instance.Fields[fieldName] = value;
+            logger.Log($"Поле {fieldName} экземпляра {instanceName} обновлено: {value}");
+        }
+        else
+        {
+            // Handle variable or array assignment
+            var varName = context.ID().GetText();
+
+            if (context.expr() != null)
             {
-                value = Visit(context.expr(1));
-                var index = (int)Visit(context.expr(0));
-                var array = (object[])variables[varName];
+                var index = (int)Visit(context.expr());
+                if (!variables.TryGetValue(varName, out var variable) || !(variable.Value is object[] array))
+                    throw new InvalidOperationException($"Переменная '{varName}' не объявлена или не является массивом.");
                 array[index] = value;
             }
             else
             {
-                value = Visit(context.expr(0));
-                variables[varName] = value;
+                if (!variables.TryGetValue(varName, out var variable))
+                    throw new InvalidOperationException($"Переменная '{varName}' не объявлена.");
+
+                if (!CheckType(variable.Type.ToString(), value))
+                    throw new InvalidOperationException($"Переменная {varName} должна быть типа {variable.Type}.");
+                variable.Value = value;
+                logger.Log($"Переменная {varName} обновлена: {value} (тип: {variable.Type})");
             }
-            logger.Log($"Переменная {varName} обновлена: {value} (тип: {GetType(value)})");
         }
-        
+
         return null;
     }
 
@@ -176,12 +206,15 @@ public class AbaScriptCustomVisitor : AbaScriptBaseVisitor<object>
         if (context.expr() != null)
         {
             var index = (int)Visit(context.expr());
-            var array = (object[])variables[varName];
+            if (!variables.TryGetValue(varName, out var variable) || !(variable.Value is object[] array))
+                throw new InvalidOperationException($"Переменная '{varName}' не объявлена или не является массивом.");
             array[index] = TryParseNumber(input);
         }
         else
         {
-            variables[varName] = TryParseNumber(input);
+            if (!variables.TryGetValue(varName, out var variable))
+                throw new InvalidOperationException($"Переменная '{varName}' не объявлена.");
+            variable.Value = TryParseNumber(input);
         }
 
         return null;
@@ -290,7 +323,6 @@ public class AbaScriptCustomVisitor : AbaScriptBaseVisitor<object>
 
         while (true)
         {
-            // Evaluate the loop condition
             if (context.logicalExpr() != null)
             {
                 var conditionResult = Visit(context.logicalExpr());
@@ -372,10 +404,12 @@ public class AbaScriptCustomVisitor : AbaScriptBaseVisitor<object>
     }
     public override object VisitFunctionDef(AbaScriptParser.FunctionDefContext context)
     {
-        var funcName = context.ID(0).GetText();
-        var parameters = context.ID().Skip(1).Select(p => p.GetText()).ToList(); // Параметры функции
-        functions[funcName] = (parameters, context.block());
-        logger.Log($"Функция {funcName} определена с параметрами: {string.Join(", ", parameters)}");
+        var funcName = context.ID().GetText();
+        var returnType = context.returnType().GetText();
+        var parameters = context.typedParam().Select(p => (p.type().GetText(), p.ID().GetText())).ToList();
+
+        functions[funcName] = (parameters, returnType, context.block());
+        logger.Log($"Функция {funcName} определена с параметрами: {string.Join(", ", parameters.Select(p => $"{p.Item1} {p.Item2}"))}");
         return null;
     }
     
@@ -391,13 +425,21 @@ public class AbaScriptCustomVisitor : AbaScriptBaseVisitor<object>
         if (arguments.Count != functionInfo.Parameters.Count)
             throw new InvalidOperationException($"Количество аргументов не совпадает для функции '{funcName}'.");
 
-        // Сохраняем текущие переменные
-        var oldVariables = new Dictionary<string, object>(variables);
+        for (int i = 0; i < arguments.Count; i++)
+        {
+            var expectedType = functionInfo.Parameters[i].type;
+            if (!CheckType(expectedType, arguments[i]))
+                throw new InvalidOperationException($"Аргумент {i} функции {funcName} должен быть типа {expectedType}.");
+        }
 
-        // Создаём локальный контекст переменных
+        var oldVariables = new Dictionary<string, Variable>(variables);
+
         variables.Clear();
         for (int i = 0; i < arguments.Count; i++)
-            variables[functionInfo.Parameters[i]] = arguments[i];
+        {
+            var parameterType = Enum.Parse<VariableType>(functionInfo.Parameters[i].type, true);
+            variables[functionInfo.Parameters[i].name] = new Variable(parameterType, arguments[i]);
+        }
 
         try
         {
@@ -405,17 +447,18 @@ public class AbaScriptCustomVisitor : AbaScriptBaseVisitor<object>
         }
         catch (ReturnException ex)
         {
-            return ex.ReturnValue; // Возвращаем значение из функции
+            if (!CheckType(functionInfo.ReturnType, ex.ReturnValue))
+                throw new InvalidOperationException($"Возвращаемое значение функции {funcName} должно быть типа {functionInfo.ReturnType}.");
+            return ex.ReturnValue;
         }
         finally
         {
-            // Восстанавливаем глобальные переменные
             variables.Clear();
             foreach (var kvp in oldVariables)
                 variables[kvp.Key] = kvp.Value;
         }
 
-        return null; // Если return не вызван
+        return null;
     }
     
     public override object VisitReturnStatement(AbaScriptParser.ReturnStatementContext context)
@@ -450,16 +493,107 @@ public class AbaScriptCustomVisitor : AbaScriptBaseVisitor<object>
 
         throw new InvalidOperationException($"Несовместимый тип для унарного минуса: {value}");
     }
-
-
     
-    private string GetType(object value)
+    public override object VisitClassDef(AbaScriptParser.ClassDefContext context)
     {
-        return value switch
+        var className = context.ID().GetText();
+        var classDef = new ClassDefinition();
+
+        foreach (var member in context.classMember())
         {
-            int => "INT",
-            string => "STRING",
-            _ => "UNKNOWN"
+            if (member.variableDeclaration() != null)
+            {
+                var varType = member.variableDeclaration().type().GetText();
+                var varName = member.variableDeclaration().ID().GetText();
+                classDef.Fields[varName] = Enum.Parse<VariableType>(varType, true);
+            }
+            else if (member.functionDef() != null)
+            {
+                var funcName = member.functionDef().ID().GetText();
+                var returnType = member.functionDef().returnType().GetText();
+                var parameters = member.functionDef().typedParam().Select(p => (p.type().GetText(), p.ID().GetText())).ToList();
+                classDef.Methods[funcName] = (parameters, returnType, member.functionDef().block());
+            }
+        }
+
+        classDefinitions[className] = classDef;
+        logger.Log($"Класс {className} определен.");
+        return null;
+    }
+    
+    public override object VisitClassInstantiation(AbaScriptParser.ClassInstantiationContext context)
+    {
+        var className = context.ID().GetText();
+        if (!classDefinitions.ContainsKey(className))
+            throw new InvalidOperationException($"Класс '{className}' не определен.");
+
+        var instanceName = context.ID().GetText();
+        classInstances[instanceName] = new ClassInstance();
+        logger.Log($"Экземпляр класса {className} создан как {instanceName}.");
+        return null;
+    }
+    
+    public override object VisitMethodCall(AbaScriptParser.MethodCallContext context)
+    {
+        var instanceName = context.ID(0).GetText();
+        var methodName = context.ID(1).GetText();
+
+        if (!classInstances.TryGetValue(instanceName, out var instance))
+            throw new InvalidOperationException($"Экземпляр '{instanceName}' не существует.");
+
+        var className = classInstances[instanceName].GetType().Name;
+        if (!classDefinitions[className].Methods.TryGetValue(methodName, out var methodInfo))
+            throw new InvalidOperationException($"Метод '{methodName}' не определен в классе '{className}'.");
+
+        var arguments = context.expr().Select(expr => Visit(expr)).ToList();
+
+        if (arguments.Count != methodInfo.Parameters.Count)
+            throw new InvalidOperationException($"Количество аргументов не совпадает для метода '{methodName}'.");
+
+        for (int i = 0; i < arguments.Count; i++)
+        {
+            var expectedType = methodInfo.Parameters[i].type;
+            if (!CheckType(expectedType, arguments[i]))
+                throw new InvalidOperationException($"Аргумент {i} метода {methodName} должен быть типа {expectedType}.");
+        }
+
+        var oldVariables = new Dictionary<string, Variable>(variables);
+
+        variables.Clear();
+        for (int i = 0; i < arguments.Count; i++)
+        {
+            var parameterType = Enum.Parse<VariableType>(methodInfo.Parameters[i].type, true);
+            variables[methodInfo.Parameters[i].name] = new Variable(parameterType, arguments[i]);
+        }
+
+        try
+        {
+            Visit(methodInfo.Body);
+        }
+        catch (ReturnException ex)
+        {
+            if (!CheckType(methodInfo.ReturnType, ex.ReturnValue))
+                throw new InvalidOperationException($"Возвращаемое значение метода {methodName} должно быть типа {methodInfo.ReturnType}.");
+            return ex.ReturnValue;
+        }
+        finally
+        {
+            variables.Clear();
+            foreach (var kvp in oldVariables)
+                variables[kvp.Key] = kvp.Value;
+        }
+
+        return null;
+    }
+    
+    private static bool CheckType(string type, object value)
+    {
+        return Enum.TryParse(type, true, out VariableType variableType) && variableType switch
+        {
+            VariableType.Int => value is int,
+            VariableType.String => value is string,
+            VariableType.Array => value is object[],
+            _ => false,
         };
     }
 }

@@ -26,5 +26,5 @@ if (errorListener.HasErrors)
 }
 
 // var visitor = new AbaScriptCustomVisitor();
-var visitor = new LlvmVisitor();
+var visitor = new AbaScriptCustomVisitor();
 visitor.Visit(tree);
