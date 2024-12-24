@@ -1,7 +1,7 @@
 ﻿grammar AbaScript;
 
 // Входная точка программы
-script: (statement | functionDef)* EOF;
+script: (statement | functionDef | classDef)* EOF;
 
 // Определения инструкций
 statement
@@ -14,18 +14,21 @@ statement
     | forStatement
     | returnStatement
     | funcCall
+    | methodCall
     | breakStatement
     | continueStatement
+    | classInstantiation
+    | fieldAccess
     ;
 
 // Объявление переменной
 variableDeclaration
-    : 'var' ID ('[' NUMBER ']')? ('=' expr)? ';'
+    : type ID ('[' NUMBER ']')? ('=' expr)? ';'
     ;
 
 // Присваивание значения переменной
 assignment
-    : (ID ('[' expr ']')?) '=' expr ';'
+    : (ID ('[' expr ']')?) | fieldAccess '=' expr ';'
     ;
 
 // Ввод данных
@@ -60,14 +63,32 @@ forStatement
     : 'for' '(' (variableDeclaration | assignment)? logicalExpr? ';' assignment? ')' block
     ;
 
-// Определение функции
+// Определение функции с типами
 functionDef
-    : 'func' ID '(' (ID (',' ID)*)? ')' block
+    : 'func' returnType ID '(' (typedParam (',' typedParam)*)? ')' block
     ;
 
-// Вызов функции
+// Параметры функции с типами
+typedParam
+    : type ID
+    ;
+
+// Вызов функции (типизация будет проверяться на этапе семантического анализа)
 funcCall
     : ID '(' (expr (',' expr)*)? ')'
+    ;
+
+// Типы данных
+type
+    : 'int'
+    | 'string'
+    | 'bool'
+    ;
+
+// Возвращаемый тип функции
+returnType
+    : type
+    | 'void'
     ;
 
 // Блок инструкций
@@ -109,7 +130,9 @@ factor
     | NUMBER                    # Number
     | STRING                    # String
     | ID ('[' expr ']')?        # VariableOrArrayAccess
+    | fieldAccess               # ClassFieldAccess
     | funcCall                  # FunctionalCall
+    | methodCall                # MethCall
     ;
 
 // Break statement
@@ -121,6 +144,32 @@ breakStatement
 continueStatement
     : 'continue' ';'
     ;
+    
+    
+// Определение класса
+classDef
+    : 'class' ID '{' classMember* '}'
+    ;
+
+// Члены класса (поля и функции)
+classMember
+    : variableDeclaration
+    | functionDef
+    ;
+
+// Создание экземпляра класса
+classInstantiation
+    : 'new' ID ';'
+    ;
+    
+methodCall
+    : ID '.' ID '(' (expr (',' expr)*)? ')'
+    ;
+    
+fieldAccess
+    : ID '.' ID
+    ;
+    
 
 // Лексеры
 ID: [a-zA-Z_][a-zA-Z0-9_]*;       // Идентификаторы (добавлена поддержка _)
