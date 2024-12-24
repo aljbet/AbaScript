@@ -7,7 +7,11 @@ public class AbaScriptCustomVisitor : AbaScriptBaseVisitor<object>
     private readonly Dictionary<string, ClassDefinition> classDefinitions = new();
     private readonly Dictionary<string, ClassInstance> classInstances = new();
     private readonly Dictionary<string, Variable> variables = new();
-    private readonly Dictionary<string, (List<(string type, string name)> Parameters, string ReturnType, AbaScriptParser.BlockContext Body)> functions = new();
+
+    private readonly
+        Dictionary<string, (List<(string type, string name)> Parameters, string ReturnType, AbaScriptParser.BlockContext
+            Body)> functions = new();
+
     private readonly Logger logger = new Logger();
 
     public override object VisitVariableDeclaration(AbaScriptParser.VariableDeclarationContext context)
@@ -34,7 +38,6 @@ public class AbaScriptCustomVisitor : AbaScriptBaseVisitor<object>
         return null;
     }
 
-    
     public override object VisitVariableOrArrayAccess(AbaScriptParser.VariableOrArrayAccessContext context)
     {
         string variableName = context.ID().GetText();
@@ -44,7 +47,8 @@ public class AbaScriptCustomVisitor : AbaScriptBaseVisitor<object>
         {
             var index = (int)Visit(context.expr());
             if (!variables.TryGetValue(variableName, out var variable) || !(variable.Value is object[] array))
-                throw new InvalidOperationException($"Переменная '{variableName}' не объявлена или не является массивом.");
+                throw new InvalidOperationException(
+                    $"Переменная '{variableName}' не объявлена или не является массивом.");
             value = array[index];
         }
         else
@@ -56,9 +60,10 @@ public class AbaScriptCustomVisitor : AbaScriptBaseVisitor<object>
 
         return value;
     }
+
     public override object VisitAssignment(AbaScriptParser.AssignmentContext context)
     {
-        object value = Visit(context.expr());
+        var expressions = context.expr();
 
         if (context.fieldAccess() != null)
         {
@@ -73,6 +78,7 @@ public class AbaScriptCustomVisitor : AbaScriptBaseVisitor<object>
             if (!classDefinitions[className].Fields.ContainsKey(fieldName))
                 throw new InvalidOperationException($"Поле '{fieldName}' не определено в классе '{className}'.");
 
+            object value = Visit(expressions[0]);
             instance.Fields[fieldName] = value;
             logger.Log($"Поле {fieldName} экземпляра {instanceName} обновлено: {value}");
         }
@@ -81,15 +87,19 @@ public class AbaScriptCustomVisitor : AbaScriptBaseVisitor<object>
             // Handle variable or array assignment
             var varName = context.ID().GetText();
 
-            if (context.expr() != null)
+            if (expressions.Length == 2)
             {
-                var index = (int)Visit(context.expr());
+                var index = (int)Visit(expressions[0]);
                 if (!variables.TryGetValue(varName, out var variable) || !(variable.Value is object[] array))
-                    throw new InvalidOperationException($"Переменная '{varName}' не объявлена или не является массивом.");
+                    throw new InvalidOperationException(
+                        $"Переменная '{varName}' не является массивом.");
+
+                object value = Visit(expressions[1]);
                 array[index] = value;
             }
             else
             {
+                object value = Visit(expressions[0]);
                 if (!variables.TryGetValue(varName, out var variable))
                     throw new InvalidOperationException($"Переменная '{varName}' не объявлена.");
 
@@ -127,10 +137,12 @@ public class AbaScriptCustomVisitor : AbaScriptBaseVisitor<object>
         {
             return leftInt + rightInt;
         }
+
         if (left is string leftStr && right is string rightStr)
         {
             return leftStr + rightStr;
         }
+
         throw new InvalidOperationException($"Несовместимые типы для операции '+': {left}, {right}");
     }
 
@@ -140,9 +152,10 @@ public class AbaScriptCustomVisitor : AbaScriptBaseVisitor<object>
         {
             return leftInt - rightInt;
         }
+
         throw new InvalidOperationException($"Несовместимые типы для операции '-': {left}, {right}");
     }
-    
+
     public override object VisitMulDivMod(AbaScriptParser.MulDivModContext context)
     {
         var left = Visit(context.term());
@@ -168,6 +181,7 @@ public class AbaScriptCustomVisitor : AbaScriptBaseVisitor<object>
         {
             return leftInt * rightInt;
         }
+
         throw new InvalidOperationException($"Несовместимые типы для операции '*': {left}, {right}");
     }
 
@@ -179,8 +193,10 @@ public class AbaScriptCustomVisitor : AbaScriptBaseVisitor<object>
             {
                 throw new DivideByZeroException("Деление на ноль невозможно.");
             }
+
             return leftInt / rightInt;
         }
+
         throw new InvalidOperationException($"Несовместимые типы для операции '/': {left}, {right}");
     }
 
@@ -192,11 +208,13 @@ public class AbaScriptCustomVisitor : AbaScriptBaseVisitor<object>
             {
                 throw new DivideByZeroException("Деление на ноль невозможно.");
             }
+
             return leftInt % rightInt;
         }
+
         throw new InvalidOperationException($"Несовместимые типы для операции '%': {left}, {right}");
     }
-    
+
     public override object VisitInputStatement(AbaScriptParser.InputStatementContext context)
     {
         var varName = context.ID().GetText();
@@ -226,8 +244,10 @@ public class AbaScriptCustomVisitor : AbaScriptBaseVisitor<object>
         {
             return number;
         }
+
         return input; // Return as string if not a number
     }
+
     public override object VisitIfStatement(AbaScriptParser.IfStatementContext context)
     {
         for (int i = 0; i < context.logicalExpr().Length; i++)
@@ -247,7 +267,7 @@ public class AbaScriptCustomVisitor : AbaScriptBaseVisitor<object>
 
         return null;
     }
-    
+
     public override object VisitLogicalExpr(AbaScriptParser.LogicalExprContext context)
     {
         switch (context)
@@ -270,7 +290,7 @@ public class AbaScriptCustomVisitor : AbaScriptBaseVisitor<object>
                 throw new InvalidOperationException("Unsupported logical expression");
         }
     }
-    
+
     public override object VisitCondition(AbaScriptParser.ConditionContext context)
     {
         var left = Visit(context.expr(0));
@@ -295,6 +315,7 @@ public class AbaScriptCustomVisitor : AbaScriptBaseVisitor<object>
         {
             return number;
         }
+
         throw new InvalidOperationException($"Невозможно преобразовать в число: {context.GetText()}");
     }
 
@@ -309,7 +330,7 @@ public class AbaScriptCustomVisitor : AbaScriptBaseVisitor<object>
         Console.WriteLine(value);
         return null;
     }
-    
+
     public override object VisitForStatement(AbaScriptParser.ForStatementContext context)
     {
         if (context.variableDeclaration() != null)
@@ -330,6 +351,7 @@ public class AbaScriptCustomVisitor : AbaScriptBaseVisitor<object>
                 {
                     throw new InvalidOperationException("The condition must evaluate to a boolean value.");
                 }
+
                 if (!boolResult)
                 {
                     break;
@@ -352,6 +374,7 @@ public class AbaScriptCustomVisitor : AbaScriptBaseVisitor<object>
                 {
                     Visit(context.assignment(1));
                 }
+
                 continue;
             }
 
@@ -361,6 +384,7 @@ public class AbaScriptCustomVisitor : AbaScriptBaseVisitor<object>
                 Visit(context.assignment(1));
             }
         }
+
         return null;
     }
 
@@ -373,6 +397,7 @@ public class AbaScriptCustomVisitor : AbaScriptBaseVisitor<object>
             {
                 throw new InvalidOperationException("The condition must evaluate to a boolean value.");
             }
+
             if (!boolResult)
             {
                 break;
@@ -391,8 +416,10 @@ public class AbaScriptCustomVisitor : AbaScriptBaseVisitor<object>
                 continue;
             }
         }
+
         return null;
     }
+
     public override object VisitBreakStatement(AbaScriptParser.BreakStatementContext context)
     {
         throw new BreakException();
@@ -402,6 +429,7 @@ public class AbaScriptCustomVisitor : AbaScriptBaseVisitor<object>
     {
         throw new ContinueException();
     }
+
     public override object VisitFunctionDef(AbaScriptParser.FunctionDefContext context)
     {
         var funcName = context.ID().GetText();
@@ -409,10 +437,11 @@ public class AbaScriptCustomVisitor : AbaScriptBaseVisitor<object>
         var parameters = context.typedParam().Select(p => (p.type().GetText(), p.ID().GetText())).ToList();
 
         functions[funcName] = (parameters, returnType, context.block());
-        logger.Log($"Функция {funcName} определена с параметрами: {string.Join(", ", parameters.Select(p => $"{p.Item1} {p.Item2}"))}");
+        logger.Log(
+            $"Функция {funcName} определена с параметрами: {string.Join(", ", parameters.Select(p => $"{p.Item1} {p.Item2}"))}");
         return null;
     }
-    
+
     public override object VisitFuncCall(AbaScriptParser.FuncCallContext context)
     {
         var funcName = context.ID().GetText();
@@ -429,7 +458,8 @@ public class AbaScriptCustomVisitor : AbaScriptBaseVisitor<object>
         {
             var expectedType = functionInfo.Parameters[i].type;
             if (!CheckType(expectedType, arguments[i]))
-                throw new InvalidOperationException($"Аргумент {i} функции {funcName} должен быть типа {expectedType}.");
+                throw new InvalidOperationException(
+                    $"Аргумент {i} функции {funcName} должен быть типа {expectedType}.");
         }
 
         var oldVariables = new Dictionary<string, Variable>(variables);
@@ -448,7 +478,8 @@ public class AbaScriptCustomVisitor : AbaScriptBaseVisitor<object>
         catch (ReturnException ex)
         {
             if (!CheckType(functionInfo.ReturnType, ex.ReturnValue))
-                throw new InvalidOperationException($"Возвращаемое значение функции {funcName} должно быть типа {functionInfo.ReturnType}.");
+                throw new InvalidOperationException(
+                    $"Возвращаемое значение функции {funcName} должно быть типа {functionInfo.ReturnType}.");
             return ex.ReturnValue;
         }
         finally
@@ -460,13 +491,13 @@ public class AbaScriptCustomVisitor : AbaScriptBaseVisitor<object>
 
         return null;
     }
-    
+
     public override object VisitReturnStatement(AbaScriptParser.ReturnStatementContext context)
     {
         var returnValue = Visit(context.expr());
         throw new ReturnException(returnValue);
     }
-    
+
     public override object VisitFactor(AbaScriptParser.FactorContext context)
     {
         return context switch
@@ -481,7 +512,7 @@ public class AbaScriptCustomVisitor : AbaScriptBaseVisitor<object>
             _ => throw new InvalidOperationException("Unsupported factor type")
         };
     }
-    
+
     public override object VisitUnaryMinus(AbaScriptParser.UnaryMinusContext context)
     {
         var value = Visit(context.factor());
@@ -493,7 +524,7 @@ public class AbaScriptCustomVisitor : AbaScriptBaseVisitor<object>
 
         throw new InvalidOperationException($"Несовместимый тип для унарного минуса: {value}");
     }
-    
+
     public override object VisitClassDef(AbaScriptParser.ClassDefContext context)
     {
         var className = context.ID().GetText();
@@ -511,7 +542,8 @@ public class AbaScriptCustomVisitor : AbaScriptBaseVisitor<object>
             {
                 var funcName = member.functionDef().ID().GetText();
                 var returnType = member.functionDef().returnType().GetText();
-                var parameters = member.functionDef().typedParam().Select(p => (p.type().GetText(), p.ID().GetText())).ToList();
+                var parameters = member.functionDef().typedParam().Select(p => (p.type().GetText(), p.ID().GetText()))
+                    .ToList();
                 classDef.Methods[funcName] = (parameters, returnType, member.functionDef().block());
             }
         }
@@ -520,7 +552,7 @@ public class AbaScriptCustomVisitor : AbaScriptBaseVisitor<object>
         logger.Log($"Класс {className} определен.");
         return null;
     }
-    
+
     public override object VisitClassInstantiation(AbaScriptParser.ClassInstantiationContext context)
     {
         var className = context.ID().GetText();
@@ -532,7 +564,7 @@ public class AbaScriptCustomVisitor : AbaScriptBaseVisitor<object>
         logger.Log($"Экземпляр класса {className} создан как {instanceName}.");
         return null;
     }
-    
+
     public override object VisitMethodCall(AbaScriptParser.MethodCallContext context)
     {
         var instanceName = context.ID(0).GetText();
@@ -554,7 +586,8 @@ public class AbaScriptCustomVisitor : AbaScriptBaseVisitor<object>
         {
             var expectedType = methodInfo.Parameters[i].type;
             if (!CheckType(expectedType, arguments[i]))
-                throw new InvalidOperationException($"Аргумент {i} метода {methodName} должен быть типа {expectedType}.");
+                throw new InvalidOperationException(
+                    $"Аргумент {i} метода {methodName} должен быть типа {expectedType}.");
         }
 
         var oldVariables = new Dictionary<string, Variable>(variables);
@@ -573,7 +606,8 @@ public class AbaScriptCustomVisitor : AbaScriptBaseVisitor<object>
         catch (ReturnException ex)
         {
             if (!CheckType(methodInfo.ReturnType, ex.ReturnValue))
-                throw new InvalidOperationException($"Возвращаемое значение метода {methodName} должно быть типа {methodInfo.ReturnType}.");
+                throw new InvalidOperationException(
+                    $"Возвращаемое значение метода {methodName} должно быть типа {methodInfo.ReturnType}.");
             return ex.ReturnValue;
         }
         finally
@@ -585,7 +619,7 @@ public class AbaScriptCustomVisitor : AbaScriptBaseVisitor<object>
 
         return null;
     }
-    
+
     private static bool CheckType(string type, object value)
     {
         return Enum.TryParse(type, true, out VariableType variableType) && variableType switch

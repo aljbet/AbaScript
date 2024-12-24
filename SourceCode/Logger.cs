@@ -1,4 +1,6 @@
-﻿namespace AbaScript;
+﻿using System.Reflection;
+
+namespace AbaScript;
 
 public class Logger
 {
@@ -6,7 +8,8 @@ public class Logger
 
     public Logger()
     {
-        logFilePath = $"log_{DateTime.Now:yyyyMMdd_HHmmss}.log";
+        logFilePath = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "\\..\\..\\..\\..\\logs\\" +
+                      $"log_{DateTime.Now:yyyyMMdd_HHmmss}.log";
     }
 
     public void Log(string message)

@@ -28,7 +28,7 @@ variableDeclaration
 
 // Присваивание значения переменной
 assignment
-    : (ID ('[' expr ']')?) | fieldAccess '=' expr ';'
+    : (ID ('[' expr ']')? | fieldAccess) '=' expr ';'
     ;
 
 // Ввод данных
