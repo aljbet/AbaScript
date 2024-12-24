@@ -21,8 +21,8 @@ public class LexerAndParserTests
     {
         const string script = """
                               
-                                          var x = 10;
-                                          func factorial(n) {
+                                          int x = 10;
+                                          func int factorial(int n) {
                                               if (n == 0 || n == 1) {
                                                   return 1;
                                               }
@@ -81,7 +81,7 @@ public class LexerAndParserTests
     [Test]
     public void ValidVariableDeclaration_ShouldHaveNoSyntaxErrors()
     {
-        const string script = "var x = 5;";
+        const string script = "int x = 5;";
         var parser = CreateParser(script);
         var tree = parser.script();
 
@@ -96,7 +96,7 @@ public class LexerAndParserTests
     {
         const string script = """
                               
-                                          func add(a, b) {
+                                          func int add(int a, int b) {
                                               return a + b;
                                           }
                                       
@@ -181,7 +181,7 @@ public class LexerAndParserTests
     {
         const string script = """
                               
-                                          for (var i = 0; i < 10; i = i + 1;) {
+                                          for (int i = 0; i < 10; i = i + 1;) {
                                               print(i);
                                           }
                                       
