@@ -4,5 +4,6 @@ public enum VariableType
 {
     Int,
     String,
-    Array
+    Array,
+    Class
 }

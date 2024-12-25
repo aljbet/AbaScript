@@ -3,7 +3,7 @@ using Antlr4.Runtime;
 using FluentAssertions;
 using FluentAssertions.Execution;
 
-namespace LexerAndParserTesting;
+namespace Tests;
 
 [TestFixture]
 public class LexerAndParserTests
@@ -205,6 +205,122 @@ public class LexerAndParserTests
         using (new AssertionScope())
         {
             parser.NumberOfSyntaxErrors.Should().BeGreaterThan(0, "logical expression is incomplete");
+        }
+    }
+
+    [Test]
+    public void ValidClassDefinition_ShouldHaveNoSyntaxErrors()
+    {
+        const string script = """
+
+                              class Vector {
+                                  int abas = 10;
+                                  func int a(int val) {
+                                      return val * abas;
+                                  }
+                              }
+
+                              """;
+        var parser = CreateParser(script);
+        var tree = parser.script();
+
+        using (new AssertionScope())
+        {
+            parser.NumberOfSyntaxErrors.Should().Be(0, "class definition should be valid");
+        }
+    }
+
+    [Test]
+    public void ValidClassInstantiationAndUsage_ShouldHaveNoSyntaxErrors()
+    {
+        const string script = """
+
+                              class Vector {
+                                  int abas = 10;
+                                  func int a(int val) {
+                                      return val + abas;
+                                  }
+                              }
+
+                              Vector item = new Vector;
+                              item.abas = 100;
+                              print(item.a(10));
+
+                              """;
+        var parser = CreateParser(script);
+        var tree = parser.script();
+
+        using (new AssertionScope())
+        {
+            parser.NumberOfSyntaxErrors.Should().Be(0, "class instantiation and usage should be valid");
+        }
+    }
+
+    [Test]
+    public void MissingBraceInClassDefinition_ShouldHaveSyntaxErrors()
+    {
+        const string script = """
+
+                              class MissingBrace {
+                                  int x = 10;
+
+                              // Missing closing brace
+
+                              """;
+        var parser = CreateParser(script);
+        var tree = parser.script();
+
+        using (new AssertionScope())
+        {
+            parser.NumberOfSyntaxErrors.Should()
+                .BeGreaterThan(0, "missing brace in class definition should cause syntax errors");
+        }
+    }
+
+    [Test]
+    public void InvalidFieldAccess_ShouldHaveSyntaxErrors()
+    {
+        const string script = """
+
+                              class Point {
+                                  int x = 5;
+                              }
+
+                              Point p = new Point;
+                              p.y = 10; // Field 'y' does not exist
+
+                              """;
+        var parser = CreateParser(script);
+        var tree = parser.script();
+
+        using (new AssertionScope())
+        {
+            parser.NumberOfSyntaxErrors.Should()
+                .BeGreaterThan(0, "accessing an undefined field should cause syntax errors");
+        }
+    }
+
+    [Test]
+    public void MethodCallOnUndeclaredVariable_ShouldHaveSyntaxErrors()
+    {
+        const string script = """
+
+                              class Dummy {
+                                  func int getValue() {
+                                      return 42;
+                                  }
+                              }
+
+                              invalidVar.getValue(); // 'invalidVar' not declared
+
+                              """;
+        var parser = CreateParser(script);
+        var tree = parser.script();
+
+        using (new AssertionScope())
+        {
+            parser.NumberOfSyntaxErrors.Should()
+                .BeGreaterThan(0, "calling method on undeclared variable should cause syntax errors");
         }
     }
 }

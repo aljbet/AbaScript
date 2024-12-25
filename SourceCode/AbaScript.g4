@@ -1,9 +1,13 @@
 ﻿grammar AbaScript;
 
-// Входная точка программы
-script: (statement | functionDef | classDef)* EOF;
+// Точка входа
+script
+    : (statement | functionDef | classDef)* EOF
+    ;
 
-// Определения инструкций
+// ---------------------
+//      Инструкции
+// ---------------------
 statement
     : variableDeclaration
     | assignment
@@ -17,16 +21,15 @@ statement
     | methodCall
     | breakStatement
     | continueStatement
-    | classInstantiation
     | fieldAccess
     ;
 
-// Объявление переменной
+// Объявление переменной (теперь type поддерживает и имена классов)
 variableDeclaration
     : type ID ('[' NUMBER ']')? ('=' expr)? ';'
     ;
 
-// Присваивание значения переменной
+// Присваивание
 assignment
     : (ID ('[' expr ']')? | fieldAccess) '=' expr ';'
     ;
@@ -41,7 +44,7 @@ outputStatement
     : 'print' '(' expr ')' ';'
     ;
 
-// Возврат значения из функции
+// Возврат
 returnStatement
     : 'return' expr ';'
     ;
@@ -63,26 +66,29 @@ forStatement
     : 'for' '(' (variableDeclaration | assignment)? logicalExpr? ';' assignment? ')' block
     ;
 
-// Определение функции с типами
+// ---------------------
+//    Функции
+// ---------------------
 functionDef
     : 'func' returnType ID '(' (typedParam (',' typedParam)*)? ')' block
     ;
 
-// Параметры функции с типами
+// Параметры функции
 typedParam
     : type ID
     ;
 
-// Вызов функции (типизация будет проверяться на этапе семантического анализа)
+// Вызов функции
 funcCall
     : ID '(' (expr (',' expr)*)? ')'
     ;
 
-// Типы данных
+// Типы (добавлен `ID` для пользовательских классов)
 type
     : 'int'
     | 'string'
     | 'bool'
+    | ID
     ;
 
 // Возвращаемый тип функции
@@ -96,84 +102,101 @@ block
     : '{' statement* '}'
     ;
 
-// Логическое выражение
+// ---------------------
+//   Логические выражения
+// ---------------------
 logicalExpr
-    : logicalExpr '&&' condition  # AndExpr
-    | logicalExpr '||' condition  # OrExpr
-    | condition                   # ConditionExpr
+    : logicalExpr '&&' condition   # AndExpr
+    | logicalExpr '||' condition   # OrExpr
+    | condition                    # ConditionExpr
     ;
 
-// Условие (логическое выражение)
 condition
     : expr comparisonOp expr
     ;
 
-// Операции сравнения
 comparisonOp
     : '==' | '!=' | '<' | '<=' | '>' | '>='
     ;
 
-// Выражения
+// ---------------------
+//   Выражения
+// ---------------------
 expr
-    : expr ('+' | '-') term        # AddSub
-    | term                        # TermExpr
+    : expr ('+' | '-') term                 # AddSub
+    | term                                  # TermExpr
     ;
 
 term
-    : term ('*' | '/' | '%') factor  # MulDivMod
-    | factor                        # FactorTerm
+    : term ('*' | '/' | '%') factor         # MulDivMod
+    | factor                                # FactorTerm
     ;
 
 factor
-    : '-' factor                 # UnaryMinus
-    | '(' expr ')'               # Parens
-    | NUMBER                    # Number
-    | STRING                    # String
-    | ID ('[' expr ']')?        # VariableOrArrayAccess
-    | fieldAccess               # ClassFieldAccess
-    | funcCall                  # FunctionalCall
-    | methodCall                # MethCall
+    : '-' factor                            # UnaryMinus
+    | '(' expr ')'                          # Parens
+    | NUMBER                                # Number
+    | STRING                                # String
+    | ID ('[' expr ']')?                    # VariableOrArrayAccess
+    | funcCall                              # FunctionalCall
+    | methodCall                            # MethCall
+    | fieldAccess                           # ClassFieldAccess
+    | 'new' ID                              # NewClass
     ;
 
-// Break statement
+// ---------------------
+// Операторы управления
+// ---------------------
 breakStatement
     : 'break' ';'
     ;
 
-// Continue statement
 continueStatement
     : 'continue' ';'
     ;
-    
-    
-// Определение класса
+
+// ---------------------
+//      Классы
+// ---------------------
 classDef
     : 'class' ID '{' classMember* '}'
     ;
 
-// Члены класса (поля и функции)
 classMember
     : variableDeclaration
     | functionDef
     ;
 
-// Создание экземпляра класса
-classInstantiation
-    : 'new' ID ';'
-    ;
-    
+// ---------------------
+//   Методы и поля
+// ---------------------
 methodCall
     : ID '.' ID '(' (expr (',' expr)*)? ')'
     ;
-    
+
 fieldAccess
     : ID '.' ID
     ;
-    
 
-// Лексеры
-ID: [a-zA-Z_][a-zA-Z0-9_]*;       // Идентификаторы (добавлена поддержка _)
-NUMBER: [0-9]+;                   // Целые числа
-STRING: '"' (~["])* '"';          // Строки
-WS: [ \t\r\n]+ -> skip;           // Пробелы
-COMMENT: '#' ~[\r\n]* -> skip;    // Комментарии
+// ---------------------
+//     Лексические правила
+// ---------------------
+ID
+    : [a-zA-Z_][a-zA-Z0-9_]*    // Идентификатор
+    ;
+
+NUMBER
+    : [0-9]+
+    ;
+
+STRING
+    : '"' (~["])* '"'
+    ;
+
+WS
+    : [ \t\r\n]+ -> skip
+    ;
+
+COMMENT
+    : '#' ~[\r\n]* -> skip
+    ;
