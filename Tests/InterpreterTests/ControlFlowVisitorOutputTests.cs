@@ -3,19 +3,19 @@ using AbaScript.AntlrClasses;
 using Antlr4.Runtime;
 using FluentAssertions;
 
-namespace LexerAndParserTesting;
+namespace Tests.InterpreterTests;
 
 [TestFixture]
-public class FunctionsVisitorOutputTests
+public class ControlFlowVisitorOutputTests
 {
     [Test]
-    public void ShouldPrintReturnValueFromFunction()
+    public void ShouldPrintInIfBlock()
     {
         const string code = @"
-            func int GetNumber() {
-                return 42;
+            int x = 3;
+            if (x < 5) {
+                print(""OK"");
             }
-            print(GetNumber());
         ";
 
         var parser = CreateParser(code);
@@ -30,27 +30,22 @@ public class FunctionsVisitorOutputTests
         visitor.Visit(tree);
 
         var output = sw.ToString().Trim();
-        output.Should().Be("42");
+        output.Should().Be("OK");
     }
 
     [Test]
-    public void ShouldThrowWhenFunctionArgumentCountIsWrong()
+    public void ShouldThrowWhenConditionIsNotBoolean()
     {
         const string code = @"
-            func int Sum(int a, int b) {
-                return a + b;
+            int x = 3;
+            if (x + 2) {
+                print(""Invalid"");
             }
-            print(Sum(5));
         ";
 
         var parser = CreateParser(code);
         var tree = parser.script();
-
-        parser.NumberOfSyntaxErrors.Should().Be(0);
-
-        var visitor = new AbaScriptCustomVisitor();
-        FluentActions.Invoking(() => visitor.Visit(tree))
-            .Should().Throw<InvalidOperationException>("wrong argument count for function call should fail");
+        parser.NumberOfSyntaxErrors.Should().Be(1);
     }
 
     private AbaScriptParser CreateParser(string input)

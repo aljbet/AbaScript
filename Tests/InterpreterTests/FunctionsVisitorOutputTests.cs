@@ -3,17 +3,19 @@ using AbaScript.AntlrClasses;
 using Antlr4.Runtime;
 using FluentAssertions;
 
-namespace LexerAndParserTesting;
+namespace Tests.InterpreterTests;
 
 [TestFixture]
-public class ExpressionsVisitorOutputTests
+public class FunctionsVisitorOutputTests
 {
     [Test]
-    public void ShouldPrintAdditionResult()
+    public void ShouldPrintReturnValueFromFunction()
     {
         const string code = @"
-            int result = 2 + 3;
-            print(result);
+            func int GetNumber() {
+                return 42;
+            }
+            print(GetNumber());
         ";
 
         var parser = CreateParser(code);
@@ -28,21 +30,27 @@ public class ExpressionsVisitorOutputTests
         visitor.Visit(tree);
 
         var output = sw.ToString().Trim();
-        output.Should().Be("5");
+        output.Should().Be("42");
     }
 
     [Test]
-    public void ShouldThrowOnInvalidExpression()
+    public void ShouldThrowWhenFunctionArgumentCountIsWrong()
     {
         const string code = @"
-            int x = 2 + ;
+            func int Sum(int a, int b) {
+                return a + b;
+            }
+            print(Sum(5));
         ";
 
         var parser = CreateParser(code);
         var tree = parser.script();
 
-        parser.NumberOfSyntaxErrors.Should()
-            .BeGreaterThan(0, "missing a right operand for '+' should be a syntax error");
+        parser.NumberOfSyntaxErrors.Should().Be(0);
+
+        var visitor = new AbaScriptCustomVisitor();
+        FluentActions.Invoking(() => visitor.Visit(tree))
+            .Should().Throw<InvalidOperationException>("wrong argument count for function call should fail");
     }
 
     private AbaScriptParser CreateParser(string input)

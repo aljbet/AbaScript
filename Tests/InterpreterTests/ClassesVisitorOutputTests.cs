@@ -3,7 +3,7 @@ using AbaScript.AntlrClasses;
 using Antlr4.Runtime;
 using FluentAssertions;
 
-namespace LexerAndParserTesting;
+namespace Tests.InterpreterTests;
 
 [TestFixture]
 public class ClassesVisitorOutputTests

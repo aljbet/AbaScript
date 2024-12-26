@@ -3,20 +3,15 @@ using AbaScript.AntlrClasses;
 using Antlr4.Runtime;
 using FluentAssertions;
 
-namespace LexerAndParserTesting;
+namespace Tests.InterpreterTests;
 
 [TestFixture]
-public class ControlFlowVisitorOutputTests
+public class VariablesVisitorOutputTests
 {
     [Test]
-    public void ShouldPrintInIfBlock()
+    public void ShouldPrintAssignedVariable()
     {
-        const string code = @"
-            int x = 3;
-            if (x < 5) {
-                print(""OK"");
-            }
-        ";
+        const string code = @" int x = 5; print(x); ";
 
         var parser = CreateParser(code);
         var tree = parser.script();
@@ -30,22 +25,25 @@ public class ControlFlowVisitorOutputTests
         visitor.Visit(tree);
 
         var output = sw.ToString().Trim();
-        output.Should().Be("OK");
+        output.Should().Be("5");
     }
 
     [Test]
-    public void ShouldThrowWhenConditionIsNotBoolean()
+    public void ShouldThrowOnInvalidVariableAssignment()
     {
         const string code = @"
             int x = 3;
-            if (x + 2) {
-                print(""Invalid"");
-            }
+            x = ""notANumber"";
         ";
 
         var parser = CreateParser(code);
         var tree = parser.script();
-        parser.NumberOfSyntaxErrors.Should().Be(1);
+
+        parser.NumberOfSyntaxErrors.Should().Be(0, "the grammar itself might not flag this as a syntax error");
+
+        var visitor = new AbaScriptCustomVisitor();
+        FluentActions.Invoking(() => visitor.Visit(tree))
+            .Should().Throw<InvalidOperationException>("assigning a string to an int variable should fail");
     }
 
     private AbaScriptParser CreateParser(string input)

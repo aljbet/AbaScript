@@ -3,15 +3,18 @@ using AbaScript.AntlrClasses;
 using Antlr4.Runtime;
 using FluentAssertions;
 
-namespace LexerAndParserTesting;
+namespace Tests.InterpreterTests;
 
 [TestFixture]
-public class VariablesVisitorOutputTests
+public class ExpressionsVisitorOutputTests
 {
     [Test]
-    public void ShouldPrintAssignedVariable()
+    public void ShouldPrintAdditionResult()
     {
-        const string code = @" int x = 5; print(x); ";
+        const string code = @"
+            int result = 2 + 3;
+            print(result);
+        ";
 
         var parser = CreateParser(code);
         var tree = parser.script();
@@ -29,21 +32,17 @@ public class VariablesVisitorOutputTests
     }
 
     [Test]
-    public void ShouldThrowOnInvalidVariableAssignment()
+    public void ShouldThrowOnInvalidExpression()
     {
         const string code = @"
-            int x = 3;
-            x = ""notANumber"";
+            int x = 2 + ;
         ";
 
         var parser = CreateParser(code);
         var tree = parser.script();
 
-        parser.NumberOfSyntaxErrors.Should().Be(0, "the grammar itself might not flag this as a syntax error");
-
-        var visitor = new AbaScriptCustomVisitor();
-        FluentActions.Invoking(() => visitor.Visit(tree))
-            .Should().Throw<InvalidOperationException>("assigning a string to an int variable should fail");
+        parser.NumberOfSyntaxErrors.Should()
+            .BeGreaterThan(0, "missing a right operand for '+' should be a syntax error");
     }
 
     private AbaScriptParser CreateParser(string input)
