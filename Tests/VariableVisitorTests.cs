@@ -53,12 +53,6 @@ public class VariablesVisitorOutputTests
         var tokens = new CommonTokenStream(lexer);
         var p = new AbaScriptParser(tokens);
 
-        var errorListener = new AbaScriptCustomListener();
-        lexer.RemoveErrorListeners();
-        lexer.AddErrorListener(errorListener);
-        p.RemoveErrorListeners();
-        p.AddErrorListener(errorListener);
-
         return p;
     }
 }

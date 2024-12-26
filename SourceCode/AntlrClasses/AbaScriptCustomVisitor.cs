@@ -7,7 +7,6 @@ public partial class AbaScriptCustomVisitor : AbaScriptBaseVisitor<object>
     private readonly Dictionary<string, ClassDefinition> classDefinitions = new();
     private readonly Dictionary<string, ClassInstance> classInstances = new();
 
-    // Словарь для хранимых функций
     private readonly Dictionary<string, (List<(string type, string name)> Parameters, string ReturnType,
         AbaScriptParser.BlockContext Body)> functions
         = new();
@@ -15,7 +14,6 @@ public partial class AbaScriptCustomVisitor : AbaScriptBaseVisitor<object>
     private readonly Logger logger = new();
     private readonly Dictionary<string, Variable> variables = new();
 
-// Дополнительные методы/исключения
     private static bool CheckType(string type, object? value)
     {
         if (Enum.TryParse<VariableType>(type, true, out var enumType))

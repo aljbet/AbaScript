@@ -24,7 +24,7 @@ statement
     | fieldAccess
     ;
 
-// Объявление переменной (теперь type поддерживает и имена классов)
+// Объявление переменной
 variableDeclaration
     : type ID ('[' NUMBER ']')? ('=' expr)? ';'
     ;
@@ -83,7 +83,7 @@ funcCall
     : ID '(' (expr (',' expr)*)? ')'
     ;
 
-// Типы (добавлен `ID` для пользовательских классов)
+// Типы
 type
     : 'int'
     | 'string'

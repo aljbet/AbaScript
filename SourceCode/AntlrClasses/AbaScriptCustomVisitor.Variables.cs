@@ -92,7 +92,6 @@ public partial class AbaScriptCustomVisitor
             }
             else
             {
-                // varName = value;
                 var value = Visit(expressions[0]);
                 if (!variables.TryGetValue(varName, out var variable))
                     throw new InvalidOperationException($"Переменная '{varName}' не объявлена.");
