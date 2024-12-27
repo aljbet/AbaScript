@@ -4,7 +4,7 @@ using AbaScript.AntlrClasses;
 using AbaScript.LlvmClasses;
 using Antlr4.Runtime;
 
-var path = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "\\..\\..\\..\\..\\example.as";
+var path = Path.GetDirectoryName(Assembly.GetEntryAssembly()?.Location) + "\\..\\..\\..\\..\\example.as";
 var input = File.ReadAllText(path);
 var lexer = new AbaScriptLexer(new AntlrInputStream(input));
 var tokens = new CommonTokenStream(lexer);
@@ -24,6 +24,6 @@ if (errorListener.HasErrors)
     return;
 }
 
-// var visitor = new LlvmVisitor();
-var visitor = new AbaScriptCustomVisitor();
+var visitor = new LlvmVisitor();
+// var visitor = new AbaScriptCustomVisitor();
 visitor.Visit(tree);
