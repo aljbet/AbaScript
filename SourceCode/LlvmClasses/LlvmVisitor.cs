@@ -1,4 +1,5 @@
 using System.Text;
+using AbaScript.AntlrClasses;
 using LLVMSharp.Interop;
 
 namespace AbaScript.LlvmClasses;
@@ -7,7 +8,42 @@ public class LlvmVisitor : AbaScriptBaseVisitor<object>
 {
     private readonly Logger logger = new();
     private readonly Stack<LLVMValueRef> valueStack = new();
-    private readonly Dictionary<string, object> variables = new();
+    private readonly Dictionary<string, LLVMValueRef> variables = new();
+
+    public override object VisitVariableDeclaration(AbaScriptParser.VariableDeclarationContext context)
+    {
+        var varType = context.type().GetText();
+        var varName = context.ID().GetText();
+        LLVMValueRef value = null;
+
+        if (context.expr() != null)
+        {
+            Visit(context.expr());
+            value = valueStack.Pop();
+            if (!CheckType(varType, value.TypeOf.Kind))
+                throw new InvalidOperationException($"Переменная {varName} должна быть типа {varType}.");
+        }
+
+        variables[varName] = value;
+        logger.Log($"Переменная {varName} объявлена со значением: {value} (тип: {varType})");
+
+        return context;
+    }
+
+    public override object VisitVariableOrArrayAccess(AbaScriptParser.VariableOrArrayAccessContext context)
+    {
+        string variableName = context.ID().GetText();
+        if (variables.TryGetValue(variableName, out var value))
+        {
+            valueStack.Push(value);
+        }
+        else
+        {
+            throw new InvalidOperationException($"Переменная '{variableName}' не объявлена.");
+        }
+
+        return context;
+    }
 
     public override unsafe object VisitOutputStatement(AbaScriptParser.OutputStatementContext context)
     {
@@ -31,9 +67,9 @@ public class LlvmVisitor : AbaScriptBaseVisitor<object>
 
     public override unsafe object VisitNumber(AbaScriptParser.NumberContext context)
     {
-        if (ulong.TryParse(context.GetText(), out var number))
+        if (int.TryParse(context.GetText(), out var number))
         {
-            valueStack.Push(LLVM.ConstInt(LLVM.IntType(32), number, 1));
+            valueStack.Push(LLVM.ConstInt(LLVM.IntType(32), (ulong)number, 1));
             return context;
         }
 
@@ -52,5 +88,15 @@ public class LlvmVisitor : AbaScriptBaseVisitor<object>
         }
 
         return context;
+    }
+
+    private static bool CheckType(string type, LLVMTypeKind valueType)
+    {
+        return Enum.TryParse(type, true, out VariableType variableType) && variableType switch
+        {
+            VariableType.Int => valueType is LLVMTypeKind.LLVMIntegerTypeKind,
+            VariableType.String => valueType is LLVMTypeKind.LLVMArrayTypeKind,
+            _ => false,
+        };
     }
 }
