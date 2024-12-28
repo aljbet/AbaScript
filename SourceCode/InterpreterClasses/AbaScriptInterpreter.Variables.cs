@@ -1,6 +1,8 @@
-﻿namespace AbaScript.AntlrClasses;
+﻿using AbaScript.AntlrClasses;
 
-public partial class AbaScriptCustomVisitor
+namespace AbaScript.InterpreterClasses;
+
+public partial class AbaScriptInterpreter
 {
     public override object VisitVariableDeclaration(AbaScriptParser.VariableDeclarationContext context)
     {

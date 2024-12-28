@@ -1,7 +1,7 @@
 ﻿using System.Reflection;
 using AbaScript;
 using AbaScript.AntlrClasses;
-using AbaScript.LlvmClasses;
+using AbaScript.InterpreterClasses;
 using Antlr4.Runtime;
 
 var path = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "\\..\\..\\..\\..\\example.as";
@@ -25,5 +25,5 @@ if (errorListener.HasErrors)
 }
 
 // var visitor = new LlvmVisitor();
-var visitor = new AbaScriptCustomVisitor();
+var visitor = new AbaScriptInterpreter();
 visitor.Visit(tree);

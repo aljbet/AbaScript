@@ -1,5 +1,5 @@
 ﻿using AbaScript;
-using AbaScript.AntlrClasses;
+using AbaScript.InterpreterClasses;
 using Antlr4.Runtime;
 using FluentAssertions;
 
@@ -21,7 +21,7 @@ public class VariablesVisitorOutputTests
         using var sw = new StringWriter();
         Console.SetOut(sw);
 
-        var visitor = new AbaScriptCustomVisitor();
+        var visitor = new AbaScriptInterpreter();
         visitor.Visit(tree);
 
         var output = sw.ToString().Trim();
@@ -41,7 +41,7 @@ public class VariablesVisitorOutputTests
 
         parser.NumberOfSyntaxErrors.Should().Be(0, "the grammar itself might not flag this as a syntax error");
 
-        var visitor = new AbaScriptCustomVisitor();
+        var visitor = new AbaScriptInterpreter();
         FluentActions.Invoking(() => visitor.Visit(tree))
             .Should().Throw<InvalidOperationException>("assigning a string to an int variable should fail");
     }

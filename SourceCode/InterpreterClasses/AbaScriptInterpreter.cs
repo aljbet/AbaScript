@@ -1,8 +1,9 @@
-﻿using AbaScript.AntlrClasses.Models;
+﻿using AbaScript.AntlrClasses;
+using AbaScript.AntlrClasses.Models;
 
-namespace AbaScript.AntlrClasses;
+namespace AbaScript.InterpreterClasses;
 
-public partial class AbaScriptCustomVisitor : AbaScriptBaseVisitor<object>
+public partial class AbaScriptInterpreter : AbaScriptBaseVisitor<object>
 {
     private readonly Dictionary<string, ClassDefinition> classDefinitions = new();
     private readonly Dictionary<string, ClassInstance> classInstances = new();

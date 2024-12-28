@@ -1,8 +1,8 @@
 ﻿using AbaScript.AntlrClasses.Models;
 
-namespace AbaScript.AntlrClasses;
+namespace AbaScript.InterpreterClasses;
 
-public partial class AbaScriptCustomVisitor
+public partial class AbaScriptInterpreter
 {
     public override object VisitAddSub(AbaScriptParser.AddSubContext context)
     {

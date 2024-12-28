@@ -1,8 +1,9 @@
-﻿using AbaScript.AntlrClasses.Models;
+﻿using AbaScript.AntlrClasses;
+using AbaScript.AntlrClasses.Models;
 
-namespace AbaScript.AntlrClasses;
+namespace AbaScript.InterpreterClasses;
 
-public partial class AbaScriptCustomVisitor
+public partial class AbaScriptInterpreter
 {
     public override object VisitClassDef(AbaScriptParser.ClassDefContext context)
     {
@@ -43,7 +44,7 @@ public partial class AbaScriptCustomVisitor
         if (!classDefinitions[className].Methods.TryGetValue(methodName, out var methodInfo))
             throw new InvalidOperationException($"Метод '{methodName}' не определён в классе '{className}'.");
 
-        var arguments = context.expr().Select(expr => Visit(expr)).ToList();
+        var arguments = context.expr().Select<AbaScriptParser.ExprContext, object>(expr => Visit(expr)).ToList();
         if (arguments.Count != methodInfo.Parameters.Count)
             throw new InvalidOperationException($"Количество аргументов не совпадает для метода '{methodName}'.");
 

@@ -1,5 +1,5 @@
 ﻿using AbaScript;
-using AbaScript.AntlrClasses;
+using AbaScript.InterpreterClasses;
 using Antlr4.Runtime;
 using FluentAssertions;
 
@@ -26,7 +26,7 @@ public class FunctionsVisitorOutputTests
         using var sw = new StringWriter();
         Console.SetOut(sw);
 
-        var visitor = new AbaScriptCustomVisitor();
+        var visitor = new AbaScriptInterpreter();
         visitor.Visit(tree);
 
         var output = sw.ToString().Trim();
@@ -48,7 +48,7 @@ public class FunctionsVisitorOutputTests
 
         parser.NumberOfSyntaxErrors.Should().Be(0);
 
-        var visitor = new AbaScriptCustomVisitor();
+        var visitor = new AbaScriptInterpreter();
         FluentActions.Invoking(() => visitor.Visit(tree))
             .Should().Throw<InvalidOperationException>("wrong argument count for function call should fail");
     }
