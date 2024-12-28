@@ -553,18 +553,6 @@ public class AbaScriptCustomVisitor : AbaScriptBaseVisitor<object>
         return null;
     }
 
-    public override object VisitClassInstantiation(AbaScriptParser.ClassInstantiationContext context)
-    {
-        var className = context.ID().GetText();
-        if (!classDefinitions.ContainsKey(className))
-            throw new InvalidOperationException($"Класс '{className}' не определен.");
-
-        var instanceName = context.ID().GetText();
-        classInstances[instanceName] = new ClassInstance();
-        logger.Log($"Экземпляр класса {className} создан как {instanceName}.");
-        return null;
-    }
-
     public override object VisitMethodCall(AbaScriptParser.MethodCallContext context)
     {
         var instanceName = context.ID(0).GetText();

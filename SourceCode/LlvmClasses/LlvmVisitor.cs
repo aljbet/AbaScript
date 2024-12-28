@@ -90,6 +90,79 @@ public class LlvmVisitor : AbaScriptBaseVisitor<object>
         return context;
     }
 
+    public override unsafe object VisitAddSub(AbaScriptParser.AddSubContext context)
+    {
+        Visit(context.expr());
+        Visit(context.term());
+
+        var right = valueStack.Pop();
+        var left = valueStack.Pop();
+
+        // Determine the operator by checking the text of the middle child
+        var operatorText = context.GetChild(1).GetText();
+
+        switch (right.TypeOf.Kind)
+        {
+            case LLVMTypeKind.LLVMIntegerTypeKind:
+                if (left.TypeOf.Kind != LLVMTypeKind.LLVMIntegerTypeKind)
+                {
+                    throw new InvalidOperationException("Incompatible types.");
+                }
+
+                var rightValue = LLVM.ConstIntGetSExtValue((LLVMOpaqueValue*)right.Handle);
+                var leftValue = LLVM.ConstIntGetSExtValue((LLVMOpaqueValue*)left.Handle);
+                switch (operatorText)
+                {
+                    case "+":
+                        valueStack.Push(
+                            LLVM.ConstInt(LLVM.IntType(32), (ulong)(leftValue + rightValue), 1)
+                        );
+                        break;
+                    case "-":
+                        valueStack.Push(
+                            LLVM.ConstInt(LLVM.IntType(32), (ulong)(leftValue - rightValue), 1)
+                        );
+                        break;
+                    default:
+                        throw new InvalidOperationException("Unsupported operation");
+                }
+
+                break;
+            case LLVMTypeKind.LLVMArrayTypeKind:
+                if (left.TypeOf.Kind != LLVMTypeKind.LLVMArrayTypeKind)
+                {
+                    throw new InvalidOperationException("Incompatible types.");
+                }
+
+                var leftAsString = left.ToString();
+                var leftIndex = leftAsString.IndexOf(']');
+                leftAsString = leftAsString.Substring(leftIndex + 4, leftAsString.Length - leftIndex - 8);
+                var rightAsString = right.ToString();
+                var rightIndex = rightAsString.IndexOf(']');
+                rightAsString = rightAsString.Substring(rightIndex + 4, rightAsString.Length - rightIndex - 8);
+                switch (operatorText)
+                {
+                    case "+":
+                        var str = leftAsString + rightAsString;
+                        var bytes = Encoding.Default.GetBytes(str);
+
+                        fixed (byte* p = bytes)
+                        {
+                            sbyte* sp = (sbyte*)p;
+                            valueStack.Push(LLVM.ConstString(sp, (uint)str.Length, 0));
+                        }
+                        break;
+                    default:
+                        throw new InvalidOperationException("Unsupported operation");
+                }
+
+                break;
+        }
+
+        logger.Log($"left={left}, right={right}, leftType={left.TypeOf.Kind}, rightType={right.TypeOf.Kind}");
+        return context;
+    }
+
     private static bool CheckType(string type, LLVMTypeKind valueType)
     {
         return Enum.TryParse(type, true, out VariableType variableType) && variableType switch
