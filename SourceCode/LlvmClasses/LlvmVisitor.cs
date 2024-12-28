@@ -45,6 +45,44 @@ public class LlvmVisitor : AbaScriptBaseVisitor<object>
         return context;
     }
 
+    public override unsafe object VisitInputStatement(AbaScriptParser.InputStatementContext context)
+    {
+        var varName = context.ID().GetText();
+        Console.Write($"Введите значение для {varName}: ");
+        var input = Console.ReadLine();
+
+        if (!variables.ContainsKey(varName))
+            throw new InvalidOperationException($"Переменная '{varName}' не объявлена.");
+        var value = TryParseNumber(input);
+        switch (value)
+        {
+            case int valueInt:
+                variables[varName] = LLVM.ConstInt(LLVM.IntType(32), (ulong)valueInt, 1);
+                break;
+            case string valueStr:
+                var bytes = Encoding.Default.GetBytes(valueStr);
+
+                fixed (byte* p = bytes)
+                {
+                    sbyte* sp = (sbyte*)p;
+                    variables[varName] = LLVM.ConstString(sp, (uint)valueStr.Length, 0);
+                }
+                break;
+        }
+
+        return context;
+    }
+
+    private object TryParseNumber(string input)
+    {
+        if (int.TryParse(input, out var number))
+        {
+            return number;
+        }
+
+        return input; // Return as string if not a number
+    }
+
     public override unsafe object VisitOutputStatement(AbaScriptParser.OutputStatementContext context)
     {
         Visit(context.expr());
@@ -151,6 +189,7 @@ public class LlvmVisitor : AbaScriptBaseVisitor<object>
                             sbyte* sp = (sbyte*)p;
                             valueStack.Push(LLVM.ConstString(sp, (uint)str.Length, 0));
                         }
+
                         break;
                     default:
                         throw new InvalidOperationException("Unsupported operation");
