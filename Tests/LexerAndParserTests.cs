@@ -1,4 +1,4 @@
-﻿using AbaScript;
+﻿using AbaScript.AntlrClasses;
 using Antlr4.Runtime;
 using FluentAssertions;
 using FluentAssertions.Execution;
