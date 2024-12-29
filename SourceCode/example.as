@@ -6,8 +6,13 @@ string hello = "Hello";
 string name;
 input(name);
 print(x + y);
-print(y-x - 1);
-print(x-y);
+print(x-y + 1);
+print(hello + ", " + name + "!");
+
+# Assignment
+x = x + y;
+print(x);
+name = "dear " + name;
 print(hello + ", " + name + "!");
 
 # Function definition

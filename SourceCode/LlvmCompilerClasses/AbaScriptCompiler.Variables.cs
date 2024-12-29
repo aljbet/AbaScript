@@ -24,6 +24,25 @@ public partial class AbaScriptCompiler
         return context;
     }
 
+    public override object VisitAssignment(AbaScriptParser.AssignmentContext context)
+    {
+        var expressions = context.expr();
+        var varName = context.ID().GetText();
+        Visit(expressions[0]);
+        LLVMValueRef value = _valueStack.Pop();
+
+        if (!_variables.TryGetValue(varName, out var variable))
+            throw new InvalidOperationException($"Переменная '{varName}' не объявлена.");
+
+        if (value.TypeOf.Kind != variable.TypeOf.Kind)
+            throw new InvalidOperationException($"Переменная {varName} должна быть типа {variable.TypeOf.Kind}.");
+        _variables[varName] = value;
+        _logger.Log($"Переменная {varName} обновлена: {value} (тип: {variable.TypeOf.Kind})");
+
+        return context;
+    }
+
+
     public override object VisitVariableOrArrayAccess(AbaScriptParser.VariableOrArrayAccessContext context)
     {
         string variableName = context.ID().GetText();
@@ -72,9 +91,7 @@ public partial class AbaScriptCompiler
                 Console.WriteLine(GetIntFromRef(currentElement));
                 break;
             case LLVMTypeKind.LLVMArrayTypeKind:
-                var asString = currentElement.ToString();
-                var index = asString.IndexOf(']');
-                Console.WriteLine(asString.Substring(index + 4, asString.Length - index - 8));
+                Console.WriteLine(GetStringFromRef(currentElement));
                 break;
         }
 
