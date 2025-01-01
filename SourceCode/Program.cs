@@ -3,6 +3,7 @@ using AbaScript;
 using AbaScript.AntlrClasses;
 using AbaScript.LlvmCompilerClasses;
 using Antlr4.Runtime;
+using LLVMSharp.Interop;
 
 var path = Path.GetDirectoryName(Assembly.GetEntryAssembly()?.Location) + "\\..\\..\\..\\..\\example.as";
 var input = File.ReadAllText(path);
@@ -24,6 +25,10 @@ if (errorListener.HasErrors)
     return;
 }
 
-var visitor = new AbaScriptCompiler();
+var context = LLVMContextRef.Create();
+var module = context.CreateModuleWithName("AbaScript");
+var builder = context.CreateBuilder();
+var visitor = new AbaScriptCompiler(context, module, builder);
 // var visitor = new AbaScriptCustomVisitor();
 visitor.Visit(tree);
+Console.WriteLine($"LLVM IR\n=========\n{module}");

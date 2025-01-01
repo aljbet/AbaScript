@@ -1,20 +1,29 @@
-﻿# Variables, input, output, + and -
-int x;
-input(x);
-int y = 20;
-string hello = "Hello";
-string name;
-input(name);
-print(x + y);
-print(x-y + 1);
-print(hello + ", " + name + "!");
+﻿func int f(int x) {
+    return x;
+}
 
+func int f2(int y) {
+    int x = f(y);
+    return y;
+}
+
+# Variables, input, output, + and -
+# int x;
+# input(x);
+# int y = 20;
+# string hello = "Hello";
+# string name;
+# input(name);
+# print(x + y);
+# print(x-y + 1);
+# print(hello + ", " + name + "!");
+#
 # Assignment
-x = x + y;
-print(x);
-name = "dear " + name;
-print(hello + ", " + name + "!");
-
+# x = x + y;
+# print(x);
+# name = "dear " + name;
+# print(hello + ", " + name + "!");
+#
 # Function definition
 # func int add(int a, int b) {
 #     return a + b;

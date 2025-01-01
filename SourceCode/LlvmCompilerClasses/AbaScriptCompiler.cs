@@ -9,6 +9,25 @@ public partial class AbaScriptCompiler : AbaScriptBaseVisitor<object>
     private readonly Logger _logger = new();
     private readonly Stack<LLVMValueRef> _valueStack = new();
     private readonly Dictionary<string, LLVMValueRef> _variables = new();
+    private readonly Dictionary<string, LLVMTypeRef> _funcTypes = new();
+    
+    private LLVMModuleRef _module;
+    private LLVMBuilderRef _builder;
+    private LLVMContextRef _context;
+
+    public AbaScriptCompiler(LLVMContextRef context, LLVMModuleRef module, LLVMBuilderRef builder)
+    {
+        _context = context;
+        _module = module;
+        _builder = builder;
+    }
+    
+    public override object VisitScript(AbaScriptParser.ScriptContext context)
+    {
+        // TODO: здесь возможно будет обертка всего example.as в одну функцию 
+        
+        return VisitChildren(context);
+    }
 
     private unsafe long GetIntFromRef(LLVMValueRef valueRef)
     {
@@ -22,9 +41,10 @@ public partial class AbaScriptCompiler : AbaScriptBaseVisitor<object>
         return asString.Substring(index + 4, asString.Length - index - 8);
     }
 
-    private unsafe LLVMValueRef GetRefFromInt(long value)
+    private LLVMValueRef GetRefFromInt(long value)
     {
-        return LLVM.ConstInt(LLVM.IntType(32), (ulong)value, 1);
+        return LLVMValueRef.CreateConstInt(_context.GetIntType(32), (ulong)value);
+        // return LLVM.ConstInt(LLVM.IntType(32), (ulong)value, 1);
     }
 
     private unsafe LLVMValueRef GetRefFromString(string str)
