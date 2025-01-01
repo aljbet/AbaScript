@@ -8,7 +8,7 @@ public partial class AbaScriptCompiler
     {
         // TODO: не работает сохранение контекста переменных
         var argumentCount = context.typedParam().Length;
-        var arguments = new LLVMTypeRef[Math.Max(1, argumentCount)]; // TODO: понять для чего здесь 1
+        var arguments = new LLVMTypeRef[argumentCount];
         var funcName = context.ID().GetText();
         
         var calleeF = _module.GetNamedFunction(funcName);
@@ -47,7 +47,6 @@ public partial class AbaScriptCompiler
         var funcType = LLVMTypeRef.CreateFunction(returnType, arguments);
         _funcTypes[funcName] = funcType; // TODO: придумать, как сделать это средствами llvm
         var function = _module.AddFunction(funcName, funcType);
-        function.Linkage = LLVMLinkage.LLVMExternalLinkage; // TODO: понять, что это значит
         
         _variables.Clear();
         
