@@ -323,4 +323,65 @@ public class LexerAndParserTests
                 .BeGreaterThan(0, "calling method on undeclared variable should cause syntax errors");
         }
     }
+    
+        [Test]
+    public void ValidLogicalNotUsage_ShouldHaveNoSyntaxErrors()
+    {
+        const string script = """
+                              int x = 5;
+                              if (!(x == 5)) {
+                                  print(0);
+                              } else {
+                                  print(1);
+                              }
+                              """;
+
+        var parser = CreateParser(script);
+        var tree = parser.script();
+
+        using (new AssertionScope())
+        {
+            parser.NumberOfSyntaxErrors.Should().Be(0, "logical NOT with parentheses should be valid");
+        }
+    }
+
+    [Test]
+    public void InvalidLogicalNotUsage_ShouldHaveSyntaxErrors()
+    {
+        const string script = """
+                              int x = 5;
+                              if (!x == 5) {
+                                  print(x);
+                              }
+                              """;
+
+        var parser = CreateParser(script);
+        var tree = parser.script();
+
+        using (new AssertionScope())
+        {
+            parser.NumberOfSyntaxErrors.Should().BeGreaterThan(0, "misuse of logical NOT operator should cause syntax errors");
+        }
+    }
+
+    [Test]
+    public void ValidLogicalExpressionWithParentheses_ShouldHaveNoSyntaxErrors()
+    {
+        // Testing more complex parentheses usage in logical expressions
+        const string script = """
+                              int x = 3;
+                              int y = 7;
+                              if ((x > 0 && y < 10) || !(y == 7)) {
+                                  print("Expression true");
+                              }
+                              """;
+
+        var parser = CreateParser(script);
+        var tree = parser.script();
+
+        using (new AssertionScope())
+        {
+            parser.NumberOfSyntaxErrors.Should().Be(0, "complex parentheses in logical expression should be valid");
+        }
+    }
 }

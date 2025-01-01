@@ -113,6 +113,8 @@ logicalExpr
 
 condition
     : expr comparisonOp expr
+    | NOT '(' logicalExpr ')'
+    | '(' logicalExpr ')'
     ;
 
 comparisonOp
@@ -191,6 +193,10 @@ NUMBER
 
 STRING
     : '"' (~["])* '"'
+    ;
+
+NOT
+    : '!'
     ;
 
 WS

@@ -10,7 +10,7 @@ var lexer = new AbaScriptLexer(new AntlrInputStream(input));
 var tokens = new CommonTokenStream(lexer);
 var parser = new AbaScriptParser(tokens);
 
-var errorListener = new AbaScriptCustomListener();
+var errorListener = new AbaScriptErrorListener();
 lexer.RemoveErrorListeners();
 lexer.AddErrorListener(errorListener);
 parser.RemoveErrorListeners();
