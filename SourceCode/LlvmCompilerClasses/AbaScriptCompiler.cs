@@ -10,6 +10,7 @@ public partial class AbaScriptCompiler : AbaScriptBaseVisitor<object>
     private readonly Stack<LLVMValueRef> _valueStack = new();
     private readonly Dictionary<string, LLVMValueRef> _variables = new();
     private readonly Dictionary<string, LLVMTypeRef> _funcTypes = new();
+    private readonly LLVMTypeRef _intType;
     
     private LLVMModuleRef _module;
     private LLVMBuilderRef _builder;
@@ -20,6 +21,7 @@ public partial class AbaScriptCompiler : AbaScriptBaseVisitor<object>
         _context = context;
         _module = module;
         _builder = builder;
+        _intType = _context.GetIntType(32);
     }
     
     public override object VisitScript(AbaScriptParser.ScriptContext context)
@@ -43,8 +45,7 @@ public partial class AbaScriptCompiler : AbaScriptBaseVisitor<object>
 
     private LLVMValueRef GetRefFromInt(long value)
     {
-        return LLVMValueRef.CreateConstInt(_context.GetIntType(32), (ulong)value);
-        // return LLVM.ConstInt(LLVM.IntType(32), (ulong)value, 1);
+        return LLVMValueRef.CreateConstInt(_intType, (ulong)value);
     }
 
     private unsafe LLVMValueRef GetRefFromString(string str)
@@ -75,6 +76,15 @@ public partial class AbaScriptCompiler : AbaScriptBaseVisitor<object>
             VariableType.Int => valueType is LLVMTypeKind.LLVMIntegerTypeKind,
             VariableType.String => valueType is LLVMTypeKind.LLVMArrayTypeKind,
             _ => false,
+        };
+    }
+
+    private LLVMTypeRef TypeMatch(string type)
+    {
+        return type switch
+        {
+            "int" => _intType,
+            _ => throw new InvalidOperationException($"Неизвестный тип {type}")
         };
     }
 }

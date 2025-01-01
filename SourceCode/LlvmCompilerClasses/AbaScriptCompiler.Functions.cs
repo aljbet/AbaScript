@@ -19,30 +19,12 @@ public partial class AbaScriptCompiler
         }
         
         var parameters = context.typedParam().Select(p => (p.type().GetText(), p.ID().GetText())).ToList();
-        for (int i = 0; i < argumentCount; ++i)
+        for (var i = 0; i < argumentCount; ++i)
         {
-            switch (parameters[i].Item1)
-            {
-                // TODO: вынести match типов в отдельную функцию
-                case "int":
-                    // TODO: вынести в константу
-                    arguments[i] = _context.GetIntType(32);
-                    break;
-                default:
-                    throw new InvalidOperationException($"Неизвестный тип {parameters[i].Item1}");
-                    break;
-            }
+            arguments[i] = TypeMatch(parameters[i].Item1);
         }
 
-        LLVMTypeRef returnType;
-        switch (context.returnType().GetText())
-        {
-            case "int":
-                returnType = _context.GetIntType(32);
-                break;
-            default:
-                throw new InvalidOperationException($"Неизвестный тип {context.returnType().GetText()}");
-        }
+        var returnType = TypeMatch(context.returnType().GetText());
 
         var funcType = LLVMTypeRef.CreateFunction(returnType, arguments);
         _funcTypes[funcName] = funcType; // TODO: придумать, как сделать это средствами llvm
