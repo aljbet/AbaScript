@@ -1,10 +1,10 @@
 ﻿func int f(int x) {
-    return x;
+    return 10;
 }
 
-func int f2(int y) {
-    int x = f(y);
-    return y;
+func int main() {
+    int z = f(5);
+    return 0;
 }
 
 # Variables, input, output, + and -
