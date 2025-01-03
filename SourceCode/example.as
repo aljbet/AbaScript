@@ -3,7 +3,7 @@
 }
 
 func int main() {
-    int z = f(5);
+    print(48);
     return 0;
 }
 

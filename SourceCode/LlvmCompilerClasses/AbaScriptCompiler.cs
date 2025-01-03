@@ -23,13 +23,6 @@ public partial class AbaScriptCompiler : AbaScriptBaseVisitor<object>
         _builder = builder;
         _intType = _context.GetIntType(32);
     }
-    
-    public override object VisitScript(AbaScriptParser.ScriptContext context)
-    {
-        // TODO: здесь возможно будет обертка всего example.as в одну функцию 
-        
-        return VisitChildren(context);
-    }
 
     private unsafe long GetIntFromRef(LLVMValueRef valueRef)
     {

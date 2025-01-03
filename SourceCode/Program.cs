@@ -73,8 +73,9 @@ using var linkProcess = System.Diagnostics.Process.Start("gcc", new[] { outFile 
 
 await linkProcess.WaitForExitAsync();
 Console.WriteLine($"Linked with standard library");
+Console.WriteLine("Тут начинается то, что выведет исполнение example.as");
 
 using var runProcess = System.Diagnostics.Process.Start("a.exe"); // запуск
 
 await runProcess.WaitForExitAsync();
-Console.WriteLine($"finished");
+Console.WriteLine($"Тут заканчивается то, что вывело исполнение example.as");
