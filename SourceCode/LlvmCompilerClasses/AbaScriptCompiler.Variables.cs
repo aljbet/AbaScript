@@ -106,7 +106,7 @@ public partial class AbaScriptCompiler
         var originalBuffer = _builder.BuildLoad2(ptrType, buffer, "");
 
         // save value to buff
-        var args = new LLVMValueRef[]{originalBuffer, _builder.BuildGlobalStringPtr("%d\n", ""), currentElement};
+        var args = new LLVMValueRef[]{originalBuffer, _builder.BuildGlobalStringPtr("%d", ""), currentElement};
         var sprintfFn = _module.GetNamedFunction("sprintf");
         var sprintfFnTy = LLVMTypeRef.CreateFunction(_context.Int32Type, new LLVMTypeRef[] {
             LLVMTypeRef.CreatePointer(_context.Int8Type, 0),
