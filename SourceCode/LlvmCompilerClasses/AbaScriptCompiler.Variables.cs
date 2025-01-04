@@ -4,7 +4,7 @@ namespace AbaScript.LlvmCompilerClasses;
 
 public partial class AbaScriptCompiler
 {
-    public override object VisitVariableDeclaration(AbaScriptParser.VariableDeclarationContext context)
+    /*public override object VisitVariableDeclaration(AbaScriptParser.VariableDeclarationContext context)
     {
         var varType = context.type().GetText();
         var varName = context.ID().GetText();
@@ -78,14 +78,14 @@ public partial class AbaScriptCompiler
         }
 
         return context;
-    }
+    }*/
 
     public override object VisitOutputStatement(AbaScriptParser.OutputStatementContext context)
     {
         // TODO: пока что подразумевается, что принтится int
         var funcName = "puts"; // можно поменять на printf
         var putsRetTy = _context.Int32Type;
-        var putsParamTys = new LLVMTypeRef[] {
+        var putsParamTys = new[] {
             LLVMTypeRef.CreatePointer(_context.Int8Type, 0)
         };
         var putsFnTy = LLVMTypeRef.CreateFunction(putsRetTy, putsParamTys);
@@ -101,14 +101,14 @@ public partial class AbaScriptCompiler
         var ptrType = LLVMTypeRef.CreatePointer(_context.Int8Type, 0);
         
         var buffer = _builder.BuildAlloca(ptrType, "print.buffer");
-        var bufferSize = LLVMValueRef.CreateConstInt(_context.Int32Type, 1024 * 4, false); // TODO: подумать каким должен быть N
-        _builder.BuildStore(_builder.BuildArrayMalloc(_context.Int8Type, bufferSize, ""), buffer);
-        var originalBuffer = _builder.BuildLoad2(ptrType, buffer, "");
+        var bufferSize = LLVMValueRef.CreateConstInt(_context.Int32Type, 1024 * 4); // TODO: подумать каким должен быть N
+        _builder.BuildStore(_builder.BuildArrayMalloc(_context.Int8Type, bufferSize), buffer);
+        var originalBuffer = _builder.BuildLoad2(ptrType, buffer);
 
         // save value to buff
-        var args = new LLVMValueRef[]{originalBuffer, _builder.BuildGlobalStringPtr("%d", ""), currentElement};
+        var args = new[]{originalBuffer, _builder.BuildGlobalStringPtr("%d"), currentElement};
         var sprintfFn = _module.GetNamedFunction("sprintf");
-        var sprintfFnTy = LLVMTypeRef.CreateFunction(_context.Int32Type, new LLVMTypeRef[] {
+        var sprintfFnTy = LLVMTypeRef.CreateFunction(_context.Int32Type, new[] {
             LLVMTypeRef.CreatePointer(_context.Int8Type, 0),
             LLVMTypeRef.CreatePointer(_context.Int8Type, 0)
         }, true);
@@ -117,10 +117,10 @@ public partial class AbaScriptCompiler
             sprintfFn = _module.AddFunction("sprintf", sprintfFnTy);
         }
         
-        var count = _builder.BuildCall2(sprintfFnTy, sprintfFn, args, "");
+        var count = _builder.BuildCall2(sprintfFnTy, sprintfFn, args);
 
         // print
-        _builder.BuildCall2(putsFnTy, putsFn, new LLVMValueRef[] { originalBuffer }, "");
+        _builder.BuildCall2(putsFnTy, putsFn, new []{ originalBuffer });
 
         _builder.BuildFree(originalBuffer);
 

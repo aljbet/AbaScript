@@ -12,8 +12,6 @@ public partial class AbaScriptCompiler
 
         var right = _valueStack.Pop();
         var left = _valueStack.Pop();
-
-        // Determine the operator by checking the text of the middle child
         var operatorText = context.GetChild(1).GetText();
 
         switch (right.TypeOf.Kind)

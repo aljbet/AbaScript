@@ -3,7 +3,10 @@
 }
 
 func int main() {
+    # Functions
     print(f(5));
+
+    # Arithmetic operations
     print(48 - 50);
     print(5 + 21 - 12);
     print(3 + 2 + 1);
