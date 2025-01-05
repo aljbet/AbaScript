@@ -23,7 +23,7 @@ public partial class AbaScriptCompiler
 
         return context;
     }
-
+*/
     public override object VisitAssignment(AbaScriptParser.AssignmentContext context)
     {
         var expressions = context.expr();
@@ -31,24 +31,25 @@ public partial class AbaScriptCompiler
         Visit(expressions[0]);
         LLVMValueRef value = _valueStack.Pop();
 
-        if (!_variables.TryGetValue(varName, out var variable))
+        if (!_scopeManager.TryGetValue(varName, out var variable))
             throw new InvalidOperationException($"Переменная '{varName}' не объявлена.");
 
-        if (value.TypeOf.Kind != variable.TypeOf.Kind)
-            throw new InvalidOperationException($"Переменная {varName} должна быть типа {variable.TypeOf.Kind}.");
-        _variables[varName] = value;
-        _logger.Log($"Переменная {varName} обновлена: {value} (тип: {variable.TypeOf.Kind})");
+        if (value.TypeOf.Kind != variable.Ty.Kind)
+            throw new InvalidOperationException($"Переменная {varName} должна быть типа {variable.Ty.Kind}.");
+
+        _builder.BuildStore(value, variable.Alloca);
+
+        _logger.Log($"Переменная {varName} обновлена: {value} (тип: {variable.Ty.Kind})");
 
         return context;
     }
 
-
     public override object VisitVariableOrArrayAccess(AbaScriptParser.VariableOrArrayAccessContext context)
     {
         string variableName = context.ID().GetText();
-        if (_variables.TryGetValue(variableName, out var value))
+        if (_scopeManager.TryGetValue(variableName, out var alloca))
         {
-            _valueStack.Push(value);
+            _valueStack.Push(_builder.BuildLoad2(alloca.Ty, alloca.Alloca));
         }
         else
         {
@@ -57,7 +58,7 @@ public partial class AbaScriptCompiler
 
         return context;
     }
-
+/*
     public override object VisitInputStatement(AbaScriptParser.InputStatementContext context)
     {
         var varName = context.ID().GetText();

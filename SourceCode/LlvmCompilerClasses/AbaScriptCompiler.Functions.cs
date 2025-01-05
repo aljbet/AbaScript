@@ -6,7 +6,6 @@ public partial class AbaScriptCompiler
 {
     public override object VisitFunctionDef(AbaScriptParser.FunctionDefContext context)
     {
-        // TODO: не работает сохранение контекста переменных
         var argumentCount = context.typedParam().Length;
         var arguments = new LLVMTypeRef[argumentCount];
         var funcName = context.ID().GetText();
@@ -27,30 +26,35 @@ public partial class AbaScriptCompiler
         var returnType = TypeMatch(context.returnType().GetText());
 
         var funcType = LLVMTypeRef.CreateFunction(returnType, arguments);
-        _funcTypes[funcName] = funcType; // TODO: придумать, как сделать это средствами llvm
+        _funcTypes[funcName] = funcType;
         var function = _module.AddFunction(funcName, funcType);
-        
-        _variables.Clear();
+
+        _scopeManager.EnterScope();
+
+        // Create a new basic block to start insertion into.
+        _builder.PositionAtEnd(function.AppendBasicBlock("entry"));
         
         for (int i = 0; i < argumentCount; ++i)
         {
             string argumentName = parameters[i].Item2;
+            LLVMTypeRef argumentTy = arguments[i];
 
             LLVMValueRef param = function.Params[i];
             param.Name = argumentName;
 
-            _variables[argumentName] = param;
+            var alloca = _builder.BuildAlloca(argumentTy);
+            _builder.BuildStore(param, alloca);
+            
+            _scopeManager[argumentName] = new AllocaInfo(alloca, argumentTy);
         }
-        
-        // Create a new basic block to start insertion into.
-        _builder.PositionAtEnd(_context.AppendBasicBlock(function, funcName));
-        
+
         try
         {
             Visit(context.block());
         }
         catch (Exception)
         {
+            _scopeManager.ExitScope();
             function.DeleteFunction();
             _funcTypes.Remove(funcName);
             throw;
@@ -66,6 +70,8 @@ public partial class AbaScriptCompiler
 
         _logger.Log(
             $"Функция {funcName} определена с параметрами: {string.Join(", ", parameters.Select(p => $"{p.Item1} {p.Item2}"))}");
+        
+        _scopeManager.ExitScope();
         
         return context;
     }
@@ -100,8 +106,7 @@ public partial class AbaScriptCompiler
                 throw new InvalidOperationException(
                     $"Аргумент {i} функции {funcName} должен быть типа {expectedType}.");
         }
-        
-        // TODO: сохранение и восстановление переменных (или это делает llvm?)
+
         var funcType = _funcTypes[funcName];
         _valueStack.Push(_builder.BuildCall2(funcType, calleeF, arguments.ToArray()));
         return context;

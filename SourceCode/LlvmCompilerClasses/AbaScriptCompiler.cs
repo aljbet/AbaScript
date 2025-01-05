@@ -8,7 +8,7 @@ public partial class AbaScriptCompiler : AbaScriptBaseVisitor<object>
 {
     private readonly Logger _logger = new();
     private readonly Stack<LLVMValueRef> _valueStack = new();
-    private readonly Dictionary<string, LLVMValueRef> _variables = new();
+    private readonly ScopeManager<AllocaInfo> _scopeManager = new();
     private readonly Dictionary<string, LLVMTypeRef> _funcTypes = new();
     private readonly LLVMTypeRef _intType;
     
