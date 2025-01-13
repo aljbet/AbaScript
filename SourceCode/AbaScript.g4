@@ -52,7 +52,7 @@ returnStatement
 // Условная конструкция
 ifStatement
     : 'if' '(' logicalExpr ')' block
-      ('elif' '(' logicalExpr ')' block)*
+//      ('elif' '(' logicalExpr ')' block)*
       ('else' block)?
     ;
 
@@ -113,6 +113,8 @@ logicalExpr
 
 condition
     : expr comparisonOp expr
+    | NOT '(' logicalExpr ')'
+    | '(' logicalExpr ')'
     ;
 
 comparisonOp
@@ -192,11 +194,12 @@ NUMBER
 STRING
     : '"' (~["])* '"'
     ;
-
+NOT
+    : '!'
+    ;
 WS
     : [ \t\r\n]+ -> skip
     ;
-
 COMMENT
     : '#' ~[\r\n]* -> skip
     ;

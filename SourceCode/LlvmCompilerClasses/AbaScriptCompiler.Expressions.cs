@@ -21,7 +21,7 @@ public partial class AbaScriptCompiler
                 {
                     throw new InvalidOperationException("Incompatible types.");
                 }
-                
+
                 switch (operatorText)
                 {
                     case "+":
@@ -67,7 +67,7 @@ public partial class AbaScriptCompiler
 
         Visit(context.term());
         Visit(context.factor());
-        
+
         var right = _valueStack.Pop();
         var left = _valueStack.Pop();
 
@@ -104,6 +104,103 @@ public partial class AbaScriptCompiler
                 throw new InvalidOperationException("Unsupported types");
         }
 
+        return context;
+    }
+
+    public override object VisitIfStatement(AbaScriptParser.IfStatementContext context)
+    {
+        Visit(context.logicalExpr());
+        var condition = _valueStack.Pop();
+        var condv = _builder.BuildICmp(LLVMIntPredicate.LLVMIntNE, condition,
+            LLVMValueRef.CreateConstInt(_context.Int32Type, 1024 * 4), "ifcond");
+        var func = _builder.InsertBlock.Parent;
+        var thenBB = LLVMBasicBlockRef.AppendInContext(_context, func, "then");
+        var elseBB = LLVMBasicBlockRef.AppendInContext(_context, func, "else");
+        var mergeBB = LLVMBasicBlockRef.AppendInContext(_context, func, "merge");
+        // var elseBB = LLVMBasicBlockRef.CreateInContext(_context, "else");
+        // var mergeBB = LLVMBasicBlockRef.CreateInContext(_context, "merge");
+        // var thenBB = _builder.InsertBlock.InsertBasicBlock("then");
+        // var elseBB = _builder.InsertBlock.InsertBasicBlock("else");
+        // var mergeBB = _builder.InsertBlock.InsertBasicBlock("merge");
+        // _builder.BuildCondBr(condition, thenBB, elseBB);
+        _builder.BuildCondBr(condv, thenBB, elseBB);
+
+        _builder.PositionAtEnd(thenBB);
+        Visit(context.block(0));
+        var then_block = _valueStack.Pop();
+        _builder.BuildBr(mergeBB);
+        thenBB = _builder.InsertBlock;
+
+        _builder.PositionAtEnd(elseBB);
+        Visit(context.block(1));
+        var else_block = _valueStack.Pop();
+        _builder.BuildBr(mergeBB);
+        elseBB = _builder.InsertBlock;
+
+        _builder.PositionAtEnd(mergeBB);
+        var phi = _builder.BuildPhi(_context.GetIntType(32));
+        phi.AddIncoming(new[] { then_block }, new[] { thenBB }, 1);
+        phi.AddIncoming(new[] { else_block }, new[] { elseBB }, 1);
+        return context;
+    }
+
+    public override object VisitCondition(AbaScriptParser.ConditionContext context)
+    {
+        // TODO: работает только для интов
+
+        Visit(context.expr(0));
+        Visit(context.expr(1));
+
+        var right = _valueStack.Pop();
+        var left = _valueStack.Pop();
+
+        // Determine the operator by checking the text of the middle child
+        var operatorText = context.GetChild(1).GetText();
+
+        _logger.Log($"left={left}, right={right}, leftType={left.TypeOf.Kind}, rightType={right.TypeOf.Kind}");
+
+        switch (right.TypeOf.Kind)
+        {
+            case LLVMTypeKind.LLVMIntegerTypeKind:
+                if (left.TypeOf.Kind != LLVMTypeKind.LLVMIntegerTypeKind)
+                {
+                    throw new InvalidOperationException("Incompatible types.");
+                }
+
+                switch (operatorText)
+                {
+//             "==" => Equals(left, right),
+//             "!=" => !Equals(left, right),
+//             "<" => (int)left < (int)right,
+//             "<=" => (int)left <= (int)right,
+//             ">" => (int)left > (int)right,
+//             ">=" => (int)left >= (int)right,
+//             _ => throw new InvalidOperationException("Unsupported comparison operation")
+                    case "==":
+                        var a = _builder.BuildICmp(LLVMIntPredicate.LLVMIntEQ, left, right);
+                        // _valueStack.Push(_builder.BuildUIToFP(a, LLVMTypeRef.Double));
+                        _valueStack.Push(a);
+                        break;
+                    default:
+                        throw new InvalidOperationException("Unsupported operation");
+                }
+
+                break;
+            default:
+                throw new InvalidOperationException("Unsupported types");
+        }
+
+        return context;
+    }
+
+    public override object VisitBlock(AbaScriptParser.BlockContext context)
+    {
+        foreach (var statement in context.statement())
+        {
+            Visit(statement);
+        }
+
+        _valueStack.Push(_builder.InsertBlock.Terminator);
         return context;
     }
 }
