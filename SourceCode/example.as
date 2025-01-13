@@ -21,6 +21,11 @@
 #    return 0;
 #}
 
+func int f(int x) {
+    print(x);
+    return x;
+}
+
 func int main() {
 #    # Functions
 #    print(f(5));
@@ -36,16 +41,51 @@ func int main() {
 #    print(7 % 2);
 #    print(6 % 3);
 #    print((0 - 50) % 2);
-    if (5==5) {
-        print(3);
+    if (5==4) {
+        int x = f(1);
     }
     else {
-        print(4);
+        int x = f(0);
     }
     
-    # print(3);
+    if (5!=4) {
+        int x = f(1);
+    }
+    else {
+        int x = f(0);
+    }
     
-    return 0;
+    if (5<5) {
+        int x = f(1);
+    }
+    else {
+        int x = f(0);
+    }
+    
+    if (5<=5) {
+        int x = f(1);
+    }
+    else {
+        int x = f(0);
+    }
+    
+    if (5>4) {
+        int x = f(1);
+    }
+    else {
+        int x = f(0);
+    }
+    
+    if (4>=4) {
+        int x = f(1);
+    }
+    else {
+        int x = f(0);
+    }
+    
+    int a = f(5);
+    
+    return 5;
 }
 
 # Variables, input, output, + and -

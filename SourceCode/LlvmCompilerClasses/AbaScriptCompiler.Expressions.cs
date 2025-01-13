@@ -112,17 +112,11 @@ public partial class AbaScriptCompiler
         Visit(context.logicalExpr());
         var condition = _valueStack.Pop();
         var condv = _builder.BuildICmp(LLVMIntPredicate.LLVMIntNE, condition,
-            LLVMValueRef.CreateConstInt(_context.Int32Type, 1024 * 4), "ifcond");
+            LLVMValueRef.CreateConstInt(_context.Int32Type, 0), "ifcond");
         var func = _builder.InsertBlock.Parent;
         var thenBB = LLVMBasicBlockRef.AppendInContext(_context, func, "then");
         var elseBB = LLVMBasicBlockRef.AppendInContext(_context, func, "else");
         var mergeBB = LLVMBasicBlockRef.AppendInContext(_context, func, "merge");
-        // var elseBB = LLVMBasicBlockRef.CreateInContext(_context, "else");
-        // var mergeBB = LLVMBasicBlockRef.CreateInContext(_context, "merge");
-        // var thenBB = _builder.InsertBlock.InsertBasicBlock("then");
-        // var elseBB = _builder.InsertBlock.InsertBasicBlock("else");
-        // var mergeBB = _builder.InsertBlock.InsertBasicBlock("merge");
-        // _builder.BuildCondBr(condition, thenBB, elseBB);
         _builder.BuildCondBr(condv, thenBB, elseBB);
 
         _builder.PositionAtEnd(thenBB);
@@ -138,9 +132,10 @@ public partial class AbaScriptCompiler
         elseBB = _builder.InsertBlock;
 
         _builder.PositionAtEnd(mergeBB);
-        var phi = _builder.BuildPhi(_context.GetIntType(32));
+        var phi = _builder.BuildPhi(_context.GetIntType(1), "phi");
         phi.AddIncoming(new[] { then_block }, new[] { thenBB }, 1);
         phi.AddIncoming(new[] { else_block }, new[] { elseBB }, 1);
+        _valueStack.Push(phi);
         return context;
     }
 
@@ -181,6 +176,21 @@ public partial class AbaScriptCompiler
                         // _valueStack.Push(_builder.BuildUIToFP(a, LLVMTypeRef.Double));
                         _valueStack.Push(a);
                         break;
+                    case "!=":
+                        _valueStack.Push(_builder.BuildICmp(LLVMIntPredicate.LLVMIntNE, left, right));
+                        break;
+                    case "<":
+                        _valueStack.Push(_builder.BuildICmp(LLVMIntPredicate.LLVMIntSLT, left, right));
+                        break;
+                    case "<=":
+                        _valueStack.Push(_builder.BuildICmp(LLVMIntPredicate.LLVMIntSLE, left, right));
+                        break;
+                    case ">":
+                        _valueStack.Push(_builder.BuildICmp(LLVMIntPredicate.LLVMIntSLT, right, left));
+                        break;
+                    case ">=":
+                        _valueStack.Push(_builder.BuildICmp(LLVMIntPredicate.LLVMIntSLE, right, left));
+                        break;
                     default:
                         throw new InvalidOperationException("Unsupported operation");
                 }
@@ -200,7 +210,6 @@ public partial class AbaScriptCompiler
             Visit(statement);
         }
 
-        _valueStack.Push(_builder.InsertBlock.Terminator);
         return context;
     }
 }
