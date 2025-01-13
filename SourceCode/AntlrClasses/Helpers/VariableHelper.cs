@@ -1,4 +1,6 @@
-﻿namespace AbaScript.AntlrClasses;
+﻿using AbaScript.AntlrClasses.Models;
+
+namespace AbaScript.AntlrClasses.Helpers;
 
 public static class VariableHelper
 {

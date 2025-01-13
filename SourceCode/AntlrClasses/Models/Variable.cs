@@ -1,4 +1,4 @@
-﻿namespace AbaScript.AntlrClasses;
+﻿namespace AbaScript.AntlrClasses.Models;
 
 public class Variable(VariableType type, object value, string className = null)
 {
