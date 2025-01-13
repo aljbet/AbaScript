@@ -112,7 +112,7 @@ public partial class AbaScriptCompiler
         Visit(context.logicalExpr());
         var condition = _valueStack.Pop();
         var condv = _builder.BuildICmp(LLVMIntPredicate.LLVMIntNE, condition,
-            LLVMValueRef.CreateConstInt(_context.Int32Type, 0), "ifcond");
+            LLVMValueRef.CreateConstInt(_context.GetIntType(1), 0), "ifcond");
         var func = _builder.InsertBlock.Parent;
         var thenBB = LLVMBasicBlockRef.AppendInContext(_context, func, "then");
         var elseBB = LLVMBasicBlockRef.AppendInContext(_context, func, "else");
@@ -132,7 +132,7 @@ public partial class AbaScriptCompiler
         elseBB = _builder.InsertBlock;
 
         _builder.PositionAtEnd(mergeBB);
-        var phi = _builder.BuildPhi(_context.GetIntType(1), "phi");
+        var phi = _builder.BuildPhi(_context.GetIntType(32), "phi");
         phi.AddIncoming(new[] { then_block }, new[] { thenBB }, 1);
         phi.AddIncoming(new[] { else_block }, new[] { elseBB }, 1);
         _valueStack.Push(phi);
@@ -164,17 +164,8 @@ public partial class AbaScriptCompiler
 
                 switch (operatorText)
                 {
-//             "==" => Equals(left, right),
-//             "!=" => !Equals(left, right),
-//             "<" => (int)left < (int)right,
-//             "<=" => (int)left <= (int)right,
-//             ">" => (int)left > (int)right,
-//             ">=" => (int)left >= (int)right,
-//             _ => throw new InvalidOperationException("Unsupported comparison operation")
                     case "==":
-                        var a = _builder.BuildICmp(LLVMIntPredicate.LLVMIntEQ, left, right);
-                        // _valueStack.Push(_builder.BuildUIToFP(a, LLVMTypeRef.Double));
-                        _valueStack.Push(a);
+                        _valueStack.Push(_builder.BuildICmp(LLVMIntPredicate.LLVMIntEQ, left, right));
                         break;
                     case "!=":
                         _valueStack.Push(_builder.BuildICmp(LLVMIntPredicate.LLVMIntNE, left, right));
