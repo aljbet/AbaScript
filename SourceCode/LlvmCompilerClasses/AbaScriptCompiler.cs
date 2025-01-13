@@ -24,6 +24,15 @@ public partial class AbaScriptCompiler : AbaScriptBaseVisitor<object>
         _intType = _context.GetIntType(32);
     }
 
+    public override object VisitScript(AbaScriptParser.ScriptContext context)
+    {
+        GetOrCreatePrintFunc();
+
+        VisitChildren(context);
+
+        return context;
+    }
+
     private unsafe long GetIntFromRef(LLVMValueRef valueRef)
     {
         return LLVM.ConstIntGetSExtValue((LLVMOpaqueValue*)valueRef.Handle);

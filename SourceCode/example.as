@@ -26,6 +26,14 @@ func int f(int x) {
     return x;
 }
 
+func int factorial(int x) {
+    if (x > 0) {
+        return x * factorial(x - 1);
+    } else {
+        return 1; 
+    }
+}
+
 func int main() {
 #    # Functions
 #    print(f(5));
@@ -83,7 +91,15 @@ func int main() {
         int x = f(0);
     }
     
+    if (5==5) {
+        print(100);
+    } else {
+        print(200);
+    }
+    
     int a = f(5);
+    
+    print(factorial(5));
     
     return 5;
 }
