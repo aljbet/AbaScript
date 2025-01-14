@@ -109,6 +109,9 @@ public partial class AbaScriptCompiler
 
     public override object VisitIfStatement(AbaScriptParser.IfStatementContext context)
     {
+        // TODO: elif
+        // TODO: and, or
+        // TODO: return inside if
         Visit(context.logicalExpr());
         var condition = _valueStack.Pop();
         var condv = _builder.BuildICmp(LLVMIntPredicate.LLVMIntNE, condition,

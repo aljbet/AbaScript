@@ -7,6 +7,7 @@ func int factorial(int x) {
     }
 }
 
+# работает только до 12
 func int main() {
-    print(factorial(5));
+    print(factorial(12));
 }

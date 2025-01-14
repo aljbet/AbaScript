@@ -5,7 +5,9 @@ using AbaScript.LlvmCompilerClasses;
 using Antlr4.Runtime;
 using LLVMSharp.Interop;
 
-var path = Path.GetDirectoryName(Assembly.GetEntryAssembly()?.Location) + "\\..\\..\\..\\..\\example.as";
+var curFileName = "if-statements.as";
+var path = Path.GetDirectoryName(Assembly.GetEntryAssembly()?.Location) + "\\..\\..\\..\\..\\abas_cripts\\" +
+           curFileName;
 var input = File.ReadAllText(path);
 var lexer = new AbaScriptLexer(new AntlrInputStream(input));
 var tokens = new CommonTokenStream(lexer);
@@ -73,9 +75,9 @@ using var linkProcess = System.Diagnostics.Process.Start("gcc", new[] { outFile 
 
 await linkProcess.WaitForExitAsync();
 Console.WriteLine($"Linked with standard library");
-Console.WriteLine("Тут начинается то, что выведет исполнение example.as");
+Console.WriteLine("Тут начинается то, что выведет исполнение " + curFileName);
 
 using var runProcess = System.Diagnostics.Process.Start("a.exe"); // запуск
 
 await runProcess.WaitForExitAsync();
-Console.WriteLine($"Тут заканчивается то, что вывело исполнение example.as");
+Console.WriteLine($"Тут заканчивается то, что вывело исполнение " + curFileName);
