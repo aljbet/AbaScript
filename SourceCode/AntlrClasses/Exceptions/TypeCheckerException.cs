@@ -2,5 +2,7 @@
 
 public class TypeCheckerException : Exception
 {
-    public TypeCheckerException(string message) : base(message) { }
+    public TypeCheckerException(string message) : base(message)
+    {
+    }
 }
