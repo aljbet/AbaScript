@@ -6,8 +6,8 @@ using Antlr4.Runtime;
 using LLVMSharp.Interop;
 
 var curFileName = "if-statements.as";
-var path = Path.GetDirectoryName(Assembly.GetEntryAssembly()?.Location) + "\\..\\..\\..\\..\\abas_cripts\\" +
-           curFileName;
+var path = Path.GetDirectoryName(Assembly.GetEntryAssembly()?.Location)
+           + "\\..\\..\\..\\..\\abas_cripts\\" + curFileName;
 var input = File.ReadAllText(path);
 var lexer = new AbaScriptLexer(new AntlrInputStream(input));
 var tokens = new CommonTokenStream(lexer);
@@ -33,7 +33,7 @@ var builder = context.CreateBuilder();
 var visitor = new AbaScriptCompiler(context, module, builder);
 // var visitor = new AbaScriptCustomVisitor();
 visitor.Visit(tree);
-Console.WriteLine($"LLVM IR\n=========\n{module}");
+// Console.WriteLine($"LLVM IR\n=========\n{module}");
 
 // Initialize LLVM
 LLVM.InitializeAllTargetInfos();

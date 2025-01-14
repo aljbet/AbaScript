@@ -70,8 +70,6 @@ public partial class AbaScriptCompiler
 
         var right = _valueStack.Pop();
         var left = _valueStack.Pop();
-
-        // Determine the operator by checking the text of the middle child
         var operatorText = context.GetChild(1).GetText();
 
         _logger.Log($"left={left}, right={right}, leftType={left.TypeOf.Kind}, rightType={right.TypeOf.Kind}");
@@ -142,17 +140,63 @@ public partial class AbaScriptCompiler
         return context;
     }
 
+    public override object VisitLogicalExpr(AbaScriptParser.LogicalExprContext context)
+    {
+        if (context.children.Count == 1)
+        {
+            Visit(context.GetChild(0));
+            return context;
+        }
+
+        Visit(context.GetChild(0));
+        Visit(context.GetChild(2));
+
+        var right = _valueStack.Pop();
+        var left = _valueStack.Pop();
+        var operatorText = context.GetChild(1).GetText();
+
+        _logger.Log($"left={left}, right={right}, leftType={left.TypeOf.Kind}, rightType={right.TypeOf.Kind}");
+
+        switch (operatorText)
+        {
+            case "&&":
+                _valueStack.Push(_builder.BuildAnd(left, right));
+                break;
+            case "||":
+                _valueStack.Push(_builder.BuildOr(left, right));
+                break;
+            default:
+                throw new InvalidOperationException("Unsupported operation");
+        }
+
+        return context;
+    }
+
     public override object VisitCondition(AbaScriptParser.ConditionContext context)
     {
         // TODO: работает только для интов
+
+        if (context.logicalExpr() != null)
+        {
+            Visit(context.logicalExpr());
+            var logExpr = _valueStack.Pop();
+            if (context.NOT() != null)
+            {
+                _valueStack.Push(_builder.BuildNot(logExpr));
+            }
+            else
+            {
+                _valueStack.Push(logExpr);
+            }
+
+            return context;
+        }
 
         Visit(context.expr(0));
         Visit(context.expr(1));
 
         var right = _valueStack.Pop();
         var left = _valueStack.Pop();
-
-        // Determine the operator by checking the text of the middle child
         var operatorText = context.GetChild(1).GetText();
 
         _logger.Log($"left={left}, right={right}, leftType={left.TypeOf.Kind}, rightType={right.TypeOf.Kind}");

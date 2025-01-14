@@ -115,6 +115,7 @@ public partial class AbaScriptCompiler
     public override object VisitReturnStatement(AbaScriptParser.ReturnStatementContext context)
     {
         Visit(context.expr());
+        _valueStack.Push(_builder.BuildRet(_valueStack.Pop()));
 
         return context;
     }
