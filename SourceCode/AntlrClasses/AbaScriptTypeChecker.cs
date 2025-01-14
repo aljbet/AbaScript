@@ -9,22 +9,12 @@ public class AbaScriptTypeChecker : AbaScriptBaseVisitor<AbaType>
     private readonly Dictionary<string, List<AbaType>> _functionParamTypes = new();
     private readonly Dictionary<string, AbaType> _functionReturnTypes = new();
     private Scope _currentScope = new();
-    
-    
-    public override AbaType VisitScript(AbaScriptParser.ScriptContext context)
-    {
-        foreach (var statement in context.statement())
-        {
-            Visit(statement);
-        }
-        return AbaType.Void;
-    }
 
     public override AbaType VisitFunctionDef(AbaScriptParser.FunctionDefContext context)
     {
         var functionName = context.ID().GetText();
         var returnType = Visit(context.returnType());
-        _functionReturnTypes.Add(functionName, returnType);
+        _functionReturnTypes[functionName] = returnType;
 
         _currentScope = new Scope(_currentScope);
 
@@ -33,14 +23,14 @@ public class AbaScriptTypeChecker : AbaScriptBaseVisitor<AbaType>
         {
             var paramType = Visit(param.type());
             var paramName = param.ID().GetText();
-            _currentScope.variables.Add(paramName, paramType);
+            _currentScope.variables[paramName] = paramType;
             paramTypes.Add(paramType);
         }
 
-        _functionParamTypes.Add(functionName, paramTypes);
+        _functionParamTypes[functionName] = paramTypes;
 
         Visit(context.block());
-        _currentScope = _currentScope.parent ?? throw new InvalidOperationException();
+        _currentScope = _currentScope.parent ?? throw new InvalidOperationException("Parent scope cannot be null.");
 
         return returnType;
     }
@@ -60,13 +50,12 @@ public class AbaScriptTypeChecker : AbaScriptBaseVisitor<AbaType>
                 $"Incorrect number of arguments for function '{functionName}'. Expected {expectedParamTypes.Count}, got {actualParamTypes.Count}.");
 
         for (var i = 0; i < expectedParamTypes.Count; i++)
-            if (expectedParamTypes[i] != actualParamTypes[i])
+            if (!Equals(expectedParamTypes[i], actualParamTypes[i]))
                 throw new TypeCheckerException(
                     $"Type mismatch for argument {i + 1} of function '{functionName}'. Expected {expectedParamTypes[i]}, got {actualParamTypes[i]}.");
 
         return _functionReturnTypes[functionName];
     }
-
 
     public override AbaType VisitClassDef(AbaScriptParser.ClassDefContext context)
     {
@@ -81,18 +70,17 @@ public class AbaScriptTypeChecker : AbaScriptBaseVisitor<AbaType>
                 var fieldType = Visit(varDecl.type());
                 var fieldName = varDecl.ID().GetText();
                 _classFields[className].Add(fieldName, fieldType);
-                _currentScope.variables[fieldName] = fieldType; // Add field to class scope
+                _currentScope.variables[fieldName] = fieldType;
             }
             else if (member.functionDef() != null)
             {
-                Visit(member.functionDef()); // Visit function definition within the class
+                Visit(member.functionDef());
             }
 
         _currentScope = _currentScope.parent ?? throw new InvalidOperationException();
 
-        return AbaType.Class;
+        return new AbaType(className);
     }
-
 
     public override AbaType VisitFieldAccess(AbaScriptParser.FieldAccessContext context)
     {
@@ -101,7 +89,7 @@ public class AbaScriptTypeChecker : AbaScriptBaseVisitor<AbaType>
 
         var classType = _currentScope.Resolve(varName);
 
-        if (classType == AbaType.Error) throw new TypeCheckerException($"Variable '{varName}' not declared.");
+        if (Equals(classType, AbaType.Error)) throw new TypeCheckerException($"Variable '{varName}' not declared.");
         if (!_classFields.ContainsKey(classType.ToString()))
             throw new TypeCheckerException($"Variable '{varName}' is not a class.");
 
@@ -114,6 +102,10 @@ public class AbaScriptTypeChecker : AbaScriptBaseVisitor<AbaType>
     public override AbaType VisitVariableDeclaration(AbaScriptParser.VariableDeclarationContext context)
     {
         var type = Visit(context.type());
+        if (context.NUMBER() != null)
+        {
+            type.IsArray = true;
+        }
         var varName = context.ID().GetText();
 
         if (_currentScope.variables.ContainsKey(varName))
@@ -124,7 +116,7 @@ public class AbaScriptTypeChecker : AbaScriptBaseVisitor<AbaType>
         if (context.expr() != null)
         {
             var exprType = Visit(context.expr());
-            if (exprType != type)
+            if (!Equals(exprType, type))
                 throw new TypeCheckerException(
                     $"Type mismatch in variable declaration. Expected '{type}', but got '{exprType}'.");
         }
@@ -139,7 +131,7 @@ public class AbaScriptTypeChecker : AbaScriptBaseVisitor<AbaType>
         {
             var varName = context.ID().GetText();
             leftType = _currentScope.Resolve(varName);
-            if (leftType == AbaType.Error) throw new TypeCheckerException($"Variable '{varName}' not declared.");
+            if (Equals(leftType, AbaType.Error)) throw new TypeCheckerException($"Variable '{varName}' not declared.");
         }
         else
         {
@@ -152,7 +144,7 @@ public class AbaScriptTypeChecker : AbaScriptBaseVisitor<AbaType>
         else
             rightType = Visit(context.expr(0));
 
-        if (leftType != rightType)
+        if (!Equals(leftType, rightType))
             throw new TypeCheckerException(
                 $"Type mismatch in assignment. Cannot assign '{rightType}' to '{leftType}'.");
 
@@ -163,8 +155,8 @@ public class AbaScriptTypeChecker : AbaScriptBaseVisitor<AbaType>
     {
         if (context.GetText() == "int") return AbaType.Int;
         if (context.GetText() == "string") return AbaType.String;
-        if (context.GetText() != "bool") return AbaType.Bool;
-        if (context.ID() != null) return AbaType.Class;
+        if (context.GetText() == "bool") return AbaType.Bool;
+        if (context.ID() != null) return new AbaType(context.ID().GetText());
         return AbaType.Error;
     }
 
@@ -173,7 +165,7 @@ public class AbaScriptTypeChecker : AbaScriptBaseVisitor<AbaType>
         var leftType = Visit(context.expr());
         var rightType = Visit(context.term());
 
-        if (leftType != AbaType.Int || rightType != AbaType.Int)
+        if (!Equals(leftType, AbaType.Int) || !Equals(rightType, AbaType.Int))
             throw new TypeCheckerException(
                 $"Type mismatch: both operands of '+' or '-' must be integers. Got {leftType} and {rightType}");
 
@@ -185,11 +177,48 @@ public class AbaScriptTypeChecker : AbaScriptBaseVisitor<AbaType>
         var leftType = Visit(context.term());
         var rightType = Visit(context.factor());
 
-        if (leftType != AbaType.Int || rightType != AbaType.Int)
+        if (!Equals(leftType, AbaType.Int) || !Equals(rightType, AbaType.Int))
             throw new TypeCheckerException(
                 $"Type mismatch: both operands of '*', '/', or '%' must be integers. Got {leftType} and {rightType}");
 
         return AbaType.Int;
+    }
+    
+    public override AbaType VisitVariableOrArrayAccess(AbaScriptParser.VariableOrArrayAccessContext context)
+    {
+        if (context.expr() == null) 
+        {
+            var identifier = context.ID().GetText();
+            var type = _currentScope.Resolve(identifier);
+            if (Equals(type, AbaType.Error))
+            {
+                throw new TypeCheckerException($"Variable '{identifier}' not defined.");
+            }
+            return type;
+        }
+        else
+        {
+            var identifier = context.ID().GetText();
+            var type = _currentScope.Resolve(identifier);
+
+            if (Equals(type, AbaType.Error))
+            {
+                throw new TypeCheckerException($"Variable '{identifier}' not defined.");
+            }
+
+            if (!type.IsArray)
+            {
+                throw new TypeCheckerException($"Variable '{identifier}' is not an array.");
+            }
+
+            var indexType = Visit(context.expr());
+            if (!Equals(indexType, AbaType.Int))
+            {
+                throw new TypeCheckerException($"Array index must be an integer. Got {indexType}.");
+            }
+
+            return new AbaType(type.Name);
+        }
     }
 
     public override AbaType VisitReturnType(AbaScriptParser.ReturnTypeContext context)

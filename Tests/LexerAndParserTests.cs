@@ -264,8 +264,6 @@ public class LexerAndParserTests
                               class MissingBrace {
                                   int x = 10;
 
-                              // Missing closing brace
-
                               """;
         var parser = CreateParser(script);
         var tree = parser.script();
@@ -278,53 +276,6 @@ public class LexerAndParserTests
     }
 
     [Test]
-    public void InvalidFieldAccess_ShouldHaveSyntaxErrors()
-    {
-        const string script = """
-
-                              class Point {
-                                  int x = 5;
-                              }
-
-                              Point p = new Point;
-                              p.y = 10; // Field 'y' does not exist
-
-                              """;
-        var parser = CreateParser(script);
-        var tree = parser.script();
-
-        using (new AssertionScope())
-        {
-            parser.NumberOfSyntaxErrors.Should()
-                .BeGreaterThan(0, "accessing an undefined field should cause syntax errors");
-        }
-    }
-
-    [Test]
-    public void MethodCallOnUndeclaredVariable_ShouldHaveSyntaxErrors()
-    {
-        const string script = """
-
-                              class Dummy {
-                                  func int getValue() {
-                                      return 42;
-                                  }
-                              }
-
-                              invalidVar.getValue(); // 'invalidVar' not declared
-
-                              """;
-        var parser = CreateParser(script);
-        var tree = parser.script();
-
-        using (new AssertionScope())
-        {
-            parser.NumberOfSyntaxErrors.Should()
-                .BeGreaterThan(0, "calling method on undeclared variable should cause syntax errors");
-        }
-    }
-    
-        [Test]
     public void ValidLogicalNotUsage_ShouldHaveNoSyntaxErrors()
     {
         const string script = """
@@ -360,14 +311,14 @@ public class LexerAndParserTests
 
         using (new AssertionScope())
         {
-            parser.NumberOfSyntaxErrors.Should().BeGreaterThan(0, "misuse of logical NOT operator should cause syntax errors");
+            parser.NumberOfSyntaxErrors.Should()
+                .BeGreaterThan(0, "misuse of logical NOT operator should cause syntax errors");
         }
     }
 
     [Test]
     public void ValidLogicalExpressionWithParentheses_ShouldHaveNoSyntaxErrors()
     {
-        // Testing more complex parentheses usage in logical expressions
         const string script = """
                               int x = 3;
                               int y = 7;
@@ -382,6 +333,90 @@ public class LexerAndParserTests
         using (new AssertionScope())
         {
             parser.NumberOfSyntaxErrors.Should().Be(0, "complex parentheses in logical expression should be valid");
+        }
+    }
+
+    [Test]
+    public void NestedIfElse_ShouldHaveNoSyntaxErrors()
+    {
+        const string script = """
+                              
+                                          if (x > 0) {
+                                              if (y < 0) {
+                                                  print("x is positive and y is negative");
+                                              } else {
+                                                  print("x is positive and y is non-negative");
+                                              }
+                                          } else {
+                                              print("x is non-positive");
+                                          }
+                                      
+                              """;
+
+        var parser = CreateParser(script);
+        var tree = parser.script();
+
+        using (new AssertionScope())
+        {
+            parser.NumberOfSyntaxErrors.Should().Be(0, "nested if-else statements should be valid");
+        }
+    }
+
+    [Test]
+    public void ComplexArithmeticExpression_ShouldHaveNoSyntaxErrors()
+    {
+        const string script = "int result = (a + b) * (c - d) / e;";
+        var parser = CreateParser(script);
+        var tree = parser.script();
+
+        using (new AssertionScope())
+        {
+            parser.NumberOfSyntaxErrors.Should().Be(0, "complex arithmetic expression should be valid");
+        }
+    }
+
+    [Test]
+    public void InvalidNestedFunctionCall_ShouldHaveSyntaxErrors()
+    {
+        const string script = "print(add(multiply(x, y), z);";
+        var parser = CreateParser(script);
+        var tree = parser.script();
+
+        using (new AssertionScope())
+        {
+            parser.NumberOfSyntaxErrors.Should()
+                .BeGreaterThan(0, "missing closing parenthesis in nested function call");
+        }
+    }
+
+    [Test]
+    public void ValidArrayDeclarationAndAccess_ShouldHaveNoSyntaxErrors()
+    {
+        const string script = """
+                              
+                                          int numbers[5];
+                                          print(numbers[2]);
+                                      
+                              """;
+        var parser = CreateParser(script);
+        var tree = parser.script();
+
+        using (new AssertionScope())
+        {
+            parser.NumberOfSyntaxErrors.Should().Be(0, "array declaration and access should be valid");
+        }
+    }
+
+    [Test]
+    public void InvalidArrayAccess_ShouldHaveSyntaxErrors()
+    {
+        const string script = "print(numbers[5);";
+        var parser = CreateParser(script);
+        var tree = parser.script();
+
+        using (new AssertionScope())
+        {
+            parser.NumberOfSyntaxErrors.Should().BeGreaterThan(0, "missing closing bracket in array access");
         }
     }
 }

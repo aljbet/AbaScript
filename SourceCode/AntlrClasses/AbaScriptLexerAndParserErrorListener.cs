@@ -2,7 +2,7 @@
 
 namespace AbaScript.AntlrClasses;
 
-public class AbaScriptErrorListener : IAntlrErrorListener<int>, IAntlrErrorListener<IToken>
+public class AbaScriptLexerAndParserErrorListener : IAntlrErrorListener<int>, IAntlrErrorListener<IToken>
 {
     public bool HasErrors { get; private set; }
 
