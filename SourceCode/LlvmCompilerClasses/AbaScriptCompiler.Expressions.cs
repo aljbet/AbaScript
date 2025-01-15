@@ -144,35 +144,31 @@ public partial class AbaScriptCompiler
         return context;
     }
 
-    public override object VisitLogicalExpr(AbaScriptParser.LogicalExprContext context)
+    public override object VisitAndExpr(AbaScriptParser.AndExprContext context)
     {
-        if (context.children.Count == 1)
-        {
-            Visit(context.GetChild(0));
-            return context;
-        }
-
-        Visit(context.GetChild(0));
-        Visit(context.GetChild(2));
-
+        Visit(context.logicalExpr());
+        Visit(context.condition());
         var right = _valueStack.Pop();
         var left = _valueStack.Pop();
-        var operatorText = context.GetChild(1).GetText();
-
         _logger.Log($"left={left}, right={right}, leftType={left.TypeOf.Kind}, rightType={right.TypeOf.Kind}");
+        _valueStack.Push(_builder.BuildAnd(left, right));
+        return context;
+    }
 
-        switch (operatorText)
-        {
-            case "&&":
-                _valueStack.Push(_builder.BuildAnd(left, right));
-                break;
-            case "||":
-                _valueStack.Push(_builder.BuildOr(left, right));
-                break;
-            default:
-                throw new InvalidOperationException("Unsupported operation");
-        }
+    public override object VisitOrExpr(AbaScriptParser.OrExprContext context)
+    {
+        Visit(context.logicalExpr());
+        Visit(context.condition());
+        var right = _valueStack.Pop();
+        var left = _valueStack.Pop();
+        _logger.Log($"left={left}, right={right}, leftType={left.TypeOf.Kind}, rightType={right.TypeOf.Kind}");
+        _valueStack.Push(_builder.BuildAnd(left, right));
+        return context;
+    }
 
+    public override object VisitConditionExpr(AbaScriptParser.ConditionExprContext context)
+    {
+        Visit(context.condition());
         return context;
     }
 
@@ -254,7 +250,7 @@ public partial class AbaScriptCompiler
 
         return context;
     }
-    
+
     private void ClearAfterReturn(LLVMBasicBlockRef block)
     {
         var instructionToDel = new List<LLVMValueRef>();
@@ -264,7 +260,8 @@ public partial class AbaScriptCompiler
             if (hasReturn)
             {
                 instructionToDel.Add(i);
-            } else if (i.IsAReturnInst != null)
+            }
+            else if (i.IsAReturnInst != null)
             {
                 hasReturn = true;
             }

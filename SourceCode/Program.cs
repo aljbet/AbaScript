@@ -5,7 +5,7 @@ using AbaScript.LlvmCompilerClasses;
 using Antlr4.Runtime;
 using LLVMSharp.Interop;
 
-var curFileName = "variables.as";
+var curFileName = "if-statements.as";
 var path = Path.GetDirectoryName(Assembly.GetEntryAssembly()?.Location)
            + "\\..\\..\\..\\..\\abas_cripts\\" + curFileName;
 var input = File.ReadAllText(path);
