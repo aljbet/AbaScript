@@ -2,6 +2,7 @@
 
 namespace AbaScript.LlvmCompilerClasses;
 
+// TODO: унарный минус
 public partial class AbaScriptCompiler
 {
     public override object VisitAddSub(AbaScriptParser.AddSubContext context)
@@ -124,19 +125,22 @@ public partial class AbaScriptCompiler
         Visit(context.block(0));
         var then_block = _valueStack.Pop();
         _builder.BuildBr(mergeBB);
+
+        ClearAfterReturn(thenBB);
         thenBB = _builder.InsertBlock;
 
         _builder.PositionAtEnd(elseBB);
         Visit(context.block(1));
         var else_block = _valueStack.Pop();
         _builder.BuildBr(mergeBB);
+        ClearAfterReturn(elseBB);
         elseBB = _builder.InsertBlock;
 
         _builder.PositionAtEnd(mergeBB);
-        var phi = _builder.BuildPhi(_context.GetIntType(32), "phi");
-        phi.AddIncoming(new[] { then_block }, new[] { thenBB }, 1);
-        phi.AddIncoming(new[] { else_block }, new[] { elseBB }, 1);
-        _valueStack.Push(phi);
+        // var phi = _builder.BuildPhi(_context.GetIntType(32), "phi");
+        // phi.AddIncoming(new[] { then_block }, new[] { thenBB }, 1);
+        // phi.AddIncoming(new[] { else_block }, new[] { elseBB }, 1);
+        // _valueStack.Push(phi);
         return context;
     }
 
@@ -249,5 +253,31 @@ public partial class AbaScriptCompiler
         }
 
         return context;
+    }
+    
+    private void ClearAfterReturn(LLVMBasicBlockRef block)
+    {
+        var instructionToDel = new List<LLVMValueRef>();
+        bool hasReturn = false;
+        for (var i = block.FirstInstruction; i != block.LastInstruction; i = i.NextInstruction)
+        {
+            if (hasReturn)
+            {
+                instructionToDel.Add(i);
+            } else if (i.IsAReturnInst != null)
+            {
+                hasReturn = true;
+            }
+        }
+
+        if (hasReturn)
+        {
+            instructionToDel.Add(block.LastInstruction);
+        }
+
+        for (var i = 0; i < instructionToDel.Count; i++)
+        {
+            instructionToDel[i].InstructionEraseFromParent();
+        }
     }
 }

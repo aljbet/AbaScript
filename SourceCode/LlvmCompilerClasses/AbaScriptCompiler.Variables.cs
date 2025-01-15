@@ -4,11 +4,11 @@ namespace AbaScript.LlvmCompilerClasses;
 
 public partial class AbaScriptCompiler
 {
-    /*public override object VisitVariableDeclaration(AbaScriptParser.VariableDeclarationContext context)
+    public override object VisitVariableDeclaration(AbaScriptParser.VariableDeclarationContext context)
     {
         var varType = context.type().GetText();
         var varName = context.ID().GetText();
-        LLVMValueRef value = null;
+        LLVMValueRef value = default;
 
         if (context.expr() != null)
         {
@@ -17,13 +17,20 @@ public partial class AbaScriptCompiler
             if (!CheckType(varType, value.TypeOf.Kind))
                 throw new InvalidOperationException($"Переменная {varName} должна быть типа {varType}.");
         }
+        // TODO: пофиксить переопределение переменных
 
-        _variables[varName] = value;
+        var varTypeLlvm = TypeMatch(varType);
+        var alloca = _builder.BuildAlloca(varTypeLlvm);
+        alloca.Name = varName;
+        _valueStack.Push(_builder.BuildStore(value, alloca));
+
+        _scopeManager[varName] = new AllocaInfo(alloca, varTypeLlvm);
+        
         _logger.Log($"Переменная {varName} объявлена со значением: {value} (тип: {varType})");
 
         return context;
     }
-*/
+
     public override object VisitAssignment(AbaScriptParser.AssignmentContext context)
     {
         var expressions = context.expr();

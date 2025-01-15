@@ -5,7 +5,7 @@ using AbaScript.LlvmCompilerClasses;
 using Antlr4.Runtime;
 using LLVMSharp.Interop;
 
-var curFileName = "if-statements.as";
+var curFileName = "variables.as";
 var path = Path.GetDirectoryName(Assembly.GetEntryAssembly()?.Location)
            + "\\..\\..\\..\\..\\abas_cripts\\" + curFileName;
 var input = File.ReadAllText(path);
@@ -33,7 +33,7 @@ var builder = context.CreateBuilder();
 var visitor = new AbaScriptCompiler(context, module, builder);
 // var visitor = new AbaScriptCustomVisitor();
 visitor.Visit(tree);
-// Console.WriteLine($"LLVM IR\n=========\n{module}");
+Console.WriteLine($"LLVM IR\n=========\n{module}");
 
 // Initialize LLVM
 LLVM.InitializeAllTargetInfos();

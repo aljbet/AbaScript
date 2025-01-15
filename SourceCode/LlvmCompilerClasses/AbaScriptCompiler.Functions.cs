@@ -32,7 +32,8 @@ public partial class AbaScriptCompiler
         _scopeManager.EnterScope();
 
         // Create a new basic block to start insertion into.
-        _builder.PositionAtEnd(function.AppendBasicBlock("entry"));
+        var block = function.AppendBasicBlock("entry");
+        _builder.PositionAtEnd(block);
         
         for (int i = 0; i < argumentCount; ++i)
         {
@@ -61,10 +62,16 @@ public partial class AbaScriptCompiler
         }
         
         // Finish off the function.
-        _builder.BuildRet(_valueStack.Pop());
+        _builder.BuildRet(LLVMValueRef.CreateConstInt(_intType, 0));
+        ClearAfterReturn(block);
+        foreach (var funcBlock in function.BasicBlocks)
+        {
+            ClearAfterReturn(funcBlock);
+        }
 
         // Validate the generated code, checking for consistency.
-        function.VerifyFunction(LLVMVerifierFailureAction.LLVMPrintMessageAction); // TODO: наверное, принтить ошибки не очень хорошая идея
+        function.VerifyFunction(LLVMVerifierFailureAction.LLVMAbortProcessAction);
+        //function.VerifyFunction(LLVMVerifierFailureAction.LLVMPrintMessageAction);
 
         _valueStack.Push(function);
 
