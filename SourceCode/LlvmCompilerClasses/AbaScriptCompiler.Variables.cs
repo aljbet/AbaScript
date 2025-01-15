@@ -6,27 +6,47 @@ public partial class AbaScriptCompiler
 {
     public override object VisitVariableDeclaration(AbaScriptParser.VariableDeclarationContext context)
     {
-        var varType = context.type().GetText();
-        var varName = context.ID().GetText();
-        LLVMValueRef value = default;
-
-        if (context.expr() != null)
-        {
-            Visit(context.expr());
-            value = _valueStack.Pop();
-            if (!CheckType(varType, value.TypeOf.Kind))
-                throw new InvalidOperationException($"Переменная {varName} должна быть типа {varType}.");
-        }
         // TODO: пофиксить переопределение переменных
 
-        var varTypeLlvm = TypeMatch(varType);
-        var alloca = _builder.BuildAlloca(varTypeLlvm);
-        alloca.Name = varName;
-        _valueStack.Push(_builder.BuildStore(value, alloca));
-
-        _scopeManager[varName] = new AllocaInfo(alloca, varTypeLlvm);
+        var varType = context.type().GetText();
+        var varName = context.ID().GetText();
         
-        _logger.Log($"Переменная {varName} объявлена со значением: {value} (тип: {varType})");
+        var varTypeLlvm = TypeMatch(varType);
+
+        if (context.NUMBER() != null) // array
+        {
+            var size = ulong.Parse(context.NUMBER().GetText());
+            var sizeLlvm = LLVMValueRef.CreateConstInt(_context.Int32Type, size);
+            var malloc = _builder.BuildArrayMalloc(varTypeLlvm, sizeLlvm);
+            
+            var alloca = _builder.BuildAlloca(varTypeLlvm);
+            alloca.Name = varName;
+            
+            _scopeManager[varName] = new ArrayAllocaInfo(alloca, varTypeLlvm, size);
+
+            _builder.BuildStore(malloc, alloca);
+        }
+        else { // int
+            LLVMValueRef value;
+            if (context.expr() != null)
+            {
+                Visit(context.expr());
+                value = _valueStack.Pop();
+                if (!CheckType(varType, value.TypeOf.Kind))
+                    throw new InvalidOperationException($"Переменная {varName} должна быть типа {varType}.");
+            }
+            else
+            {
+                value = LLVMValueRef.CreateConstInt(_intType, 0); // default value
+            }
+            var alloca = _builder.BuildAlloca(varTypeLlvm);
+            alloca.Name = varName;
+            _valueStack.Push(_builder.BuildStore(value, alloca));
+
+            _scopeManager[varName] = new AllocaInfo(alloca, varTypeLlvm);
+            
+            _logger.Log($"Переменная {varName} объявлена со значением: {value} (тип: {varType})");
+        }
 
         return context;
     }
@@ -35,18 +55,38 @@ public partial class AbaScriptCompiler
     {
         var expressions = context.expr();
         var varName = context.ID().GetText();
-        Visit(expressions[0]);
-        LLVMValueRef value = _valueStack.Pop();
 
-        if (!_scopeManager.TryGetValue(varName, out var variable))
-            throw new InvalidOperationException($"Переменная '{varName}' не объявлена.");
+        if (expressions.Length == 2) // array element
+        {
+            Visit(expressions[0]);
+            var index = _valueStack.Pop();
 
-        if (value.TypeOf.Kind != variable.Ty.Kind)
-            throw new InvalidOperationException($"Переменная {varName} должна быть типа {variable.Ty.Kind}.");
+            Visit(expressions[1]);
+            var value = _valueStack.Pop();
+            
+            if (!_scopeManager.TryGetValue(varName, out var variable) || !(variable is ArrayAllocaInfo))
+                throw new InvalidOperationException($"Переменная '{varName}' не объявлена или не является массивом.");
+            
+            if (value.TypeOf.Kind != variable.Ty.Kind)
+                throw new InvalidOperationException($"Переменная {varName} должна быть типа {variable.Ty.Kind}.");
 
-        _builder.BuildStore(value, variable.Alloca);
+            LLVMValueRef vectorIndexPtr = _builder.BuildGEP2(variable.Ty, variable.Alloca, new LLVMValueRef[] { index });
+            _builder.BuildStore(value, vectorIndexPtr);
+        }
+        else
+        {
+            Visit(expressions[0]);
+            LLVMValueRef value = _valueStack.Pop();
 
-        _logger.Log($"Переменная {varName} обновлена: {value} (тип: {variable.Ty.Kind})");
+            if (!_scopeManager.TryGetValue(varName, out var variable))
+                throw new InvalidOperationException($"Переменная '{varName}' не объявлена.");
+            
+            if (value.TypeOf.Kind != variable.Ty.Kind)
+                throw new InvalidOperationException($"Переменная {varName} должна быть типа {variable.Ty.Kind}.");
+
+            _builder.BuildStore(value, variable.Alloca);
+            _logger.Log($"Переменная {varName} обновлена: {value} (тип: {variable.Ty.Kind})");
+        }
 
         return context;
     }
@@ -54,13 +94,28 @@ public partial class AbaScriptCompiler
     public override object VisitVariableOrArrayAccess(AbaScriptParser.VariableOrArrayAccessContext context)
     {
         string variableName = context.ID().GetText();
-        if (_scopeManager.TryGetValue(variableName, out var alloca))
+        if (context.expr() != null) // array
         {
-            _valueStack.Push(_builder.BuildLoad2(alloca.Ty, alloca.Alloca));
+            // TODO: обрабатывать границы массива
+            Visit(context.expr());
+            var index = _valueStack.Pop();
+
+            if (!_scopeManager.TryGetValue(variableName, out var variable) || !(variable is ArrayAllocaInfo))
+                throw new InvalidOperationException($"Переменная '{variableName}' не объявлена или не является массивом.");
+            
+            LLVMValueRef vectorIndexPtr = _builder.BuildGEP2(variable.Ty, variable.Alloca, new LLVMValueRef[] { index });
+            _valueStack.Push(_builder.BuildLoad2(variable.Ty, vectorIndexPtr));
         }
-        else
+        else // int
         {
-            throw new InvalidOperationException($"Переменная '{variableName}' не объявлена.");
+            if (_scopeManager.TryGetValue(variableName, out var alloca))
+            {
+                _valueStack.Push(_builder.BuildLoad2(alloca.Ty, alloca.Alloca));
+            }
+            else
+            {
+                throw new InvalidOperationException($"Переменная '{variableName}' не объявлена.");
+            }
         }
 
         return context;
@@ -90,7 +145,7 @@ public partial class AbaScriptCompiler
 
     public override object VisitOutputStatement(AbaScriptParser.OutputStatementContext context)
     {
-        // TODO: пока что подразумевается, что принтится int
+        // TODO: пока что подразумевается, что принтится int (для элементов массива тоже работает)
         
         Visit(context.expr());
         var currentElement = _valueStack.Pop();
