@@ -1,7 +1,6 @@
 ﻿using System.Reflection;
-using AbaScript;
 using AbaScript.AntlrClasses;
-using AbaScript.LlvmClasses;
+using AbaScript.InterpreterClasses;
 using Antlr4.Runtime;
 
 var path = Path.GetDirectoryName(Assembly.GetEntryAssembly()?.Location) + "\\..\\..\\..\\..\\example.as";
@@ -10,7 +9,7 @@ var lexer = new AbaScriptLexer(new AntlrInputStream(input));
 var tokens = new CommonTokenStream(lexer);
 var parser = new AbaScriptParser(tokens);
 
-var errorListener = new AbaScriptCustomListener();
+var errorListener = new AbaScriptLexerAndParserErrorListener();
 lexer.RemoveErrorListeners();
 lexer.AddErrorListener(errorListener);
 parser.RemoveErrorListeners();

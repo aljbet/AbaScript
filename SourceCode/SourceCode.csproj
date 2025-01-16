@@ -20,11 +20,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Content Include="AbaScript.g4" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="logs\" />
+      <Content Include="AntlrClasses\AbaScript.g4" />
     </ItemGroup>
     
 </Project>
