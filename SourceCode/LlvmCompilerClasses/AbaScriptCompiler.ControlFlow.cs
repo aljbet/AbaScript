@@ -1,4 +1,5 @@
-﻿using LLVMSharp.Interop;
+﻿using AbaScript.AntlrClasses;
+using LLVMSharp.Interop;
 
 namespace AbaScript.LlvmCompilerClasses;
 
@@ -7,7 +8,7 @@ public partial class AbaScriptCompiler
     public override object VisitIfStatement(AbaScriptParser.IfStatementContext context)
     {
         // TODO: elif
-        Visit(context.logicalExpr());
+        Visit(context.logicalExpr(0));
         var condition = _valueStack.Pop();
         var condv = _builder.BuildICmp(LLVMIntPredicate.LLVMIntNE, condition,
             LLVMValueRef.CreateConstInt(_context.GetIntType(1), 0), "ifcond");

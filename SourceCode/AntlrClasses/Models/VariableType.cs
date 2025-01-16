@@ -1,8 +1,9 @@
-﻿namespace AbaScript.AntlrClasses;
+﻿namespace AbaScript.AntlrClasses.Models;
 
 public enum VariableType
 {
     Int,
     String,
-    Array
+    Array,
+    Class
 }

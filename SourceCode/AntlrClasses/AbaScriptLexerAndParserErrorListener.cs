@@ -1,11 +1,10 @@
-﻿namespace AbaScript.AntlrClasses;
+﻿using Antlr4.Runtime;
 
-using System;
-using Antlr4.Runtime;
+namespace AbaScript.AntlrClasses;
 
-class AbaScriptCustomListener : IAntlrErrorListener<int>, IAntlrErrorListener<IToken>
+public class AbaScriptLexerAndParserErrorListener : IAntlrErrorListener<int>, IAntlrErrorListener<IToken>
 {
-    public bool HasErrors { get; private set; } = false;
+    public bool HasErrors { get; private set; }
 
     public void SyntaxError(IRecognizer recognizer, int offendingSymbol, int line, int charPositionInLine, string msg,
         RecognitionException e)

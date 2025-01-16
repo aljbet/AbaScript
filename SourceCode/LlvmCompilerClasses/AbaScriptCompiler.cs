@@ -1,5 +1,6 @@
 using System.Text;
 using AbaScript.AntlrClasses;
+using AbaScript.AntlrClasses.Models;
 using LLVMSharp.Interop;
 
 namespace AbaScript.LlvmCompilerClasses;

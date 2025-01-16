@@ -6,8 +6,8 @@ using Antlr4.Runtime;
 using LLVMSharp.Interop;
 
 // var curFileName = "3-benchmarks\\array-sorting.as";
-var curFileName = "3-benchmarks\\factorial.as";
-// var curFileName = "3-benchmarks\\prime-numbers.as";
+// var curFileName = "3-benchmarks\\factorial.as";
+var curFileName = "3-benchmarks\\prime-numbers.as";
 var path = Path.GetDirectoryName(Assembly.GetEntryAssembly()?.Location)
            + "\\..\\..\\..\\..\\abas_cripts\\" + curFileName;
 var input = File.ReadAllText(path);
@@ -15,7 +15,7 @@ var lexer = new AbaScriptLexer(new AntlrInputStream(input));
 var tokens = new CommonTokenStream(lexer);
 var parser = new AbaScriptParser(tokens);
 
-var errorListener = new AbaScriptCustomListener();
+var errorListener = new AbaScriptLexerAndParserErrorListener();
 lexer.RemoveErrorListeners();
 lexer.AddErrorListener(errorListener);
 parser.RemoveErrorListeners();
