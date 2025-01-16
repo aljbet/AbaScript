@@ -5,7 +5,7 @@ using AbaScript.LlvmCompilerClasses;
 using Antlr4.Runtime;
 using LLVMSharp.Interop;
 
-var curFileName = "array.as";
+var curFileName = "3-benchmarks\\array-sorting.as";
 var path = Path.GetDirectoryName(Assembly.GetEntryAssembly()?.Location)
            + "\\..\\..\\..\\..\\abas_cripts\\" + curFileName;
 var input = File.ReadAllText(path);

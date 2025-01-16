@@ -106,44 +106,6 @@ public partial class AbaScriptCompiler
         return context;
     }
 
-    public override object VisitIfStatement(AbaScriptParser.IfStatementContext context)
-    {
-        // TODO: elif
-        // TODO: and, or
-        // TODO: return inside if
-        Visit(context.logicalExpr());
-        var condition = _valueStack.Pop();
-        var condv = _builder.BuildICmp(LLVMIntPredicate.LLVMIntNE, condition,
-            LLVMValueRef.CreateConstInt(_context.GetIntType(1), 0), "ifcond");
-        var func = _builder.InsertBlock.Parent;
-        var thenBB = LLVMBasicBlockRef.AppendInContext(_context, func, "then");
-        var elseBB = LLVMBasicBlockRef.AppendInContext(_context, func, "else");
-        var mergeBB = LLVMBasicBlockRef.AppendInContext(_context, func, "merge");
-        _builder.BuildCondBr(condv, thenBB, elseBB);
-
-        _builder.PositionAtEnd(thenBB);
-        Visit(context.block(0));
-        var then_block = _valueStack.Pop();
-        _builder.BuildBr(mergeBB);
-
-        ClearAfterReturn(thenBB);
-        thenBB = _builder.InsertBlock;
-
-        _builder.PositionAtEnd(elseBB);
-        Visit(context.block(1));
-        var else_block = _valueStack.Pop();
-        _builder.BuildBr(mergeBB);
-        ClearAfterReturn(elseBB);
-        elseBB = _builder.InsertBlock;
-
-        _builder.PositionAtEnd(mergeBB);
-        // var phi = _builder.BuildPhi(_context.GetIntType(32), "phi");
-        // phi.AddIncoming(new[] { then_block }, new[] { thenBB }, 1);
-        // phi.AddIncoming(new[] { else_block }, new[] { elseBB }, 1);
-        // _valueStack.Push(phi);
-        return context;
-    }
-
     public override object VisitAndExpr(AbaScriptParser.AndExprContext context)
     {
         Visit(context.logicalExpr());

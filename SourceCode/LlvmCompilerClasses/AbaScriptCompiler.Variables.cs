@@ -6,7 +6,7 @@ public partial class AbaScriptCompiler
 {
     public override object VisitVariableDeclaration(AbaScriptParser.VariableDeclarationContext context)
     {
-        // TODO: пофиксить переопределение переменных
+        // TODO: пофиксить повторное объявление переменных
 
         var varType = context.type().GetText();
         var varName = context.ID().GetText();
