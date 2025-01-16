@@ -7,14 +7,14 @@ func int getMax(int x, int y) {
     }
 }
 
-func int getMin(int x, int y) {
-    if (x < y) {
-        return x;
-    }
-    else {
-        return y;
-    }
-}
+#func int getMin(int x, int y) {
+#    if (x < y) {
+#        return x;
+#    }
+#    else {
+#        return y;
+#    }
+#}
 
 func int main() {
     int abas[10];
@@ -32,8 +32,8 @@ func int main() {
     int min;
     int max;
     #int c;
-    for (int j = 0; j < 9; j = j + 1;) {
-        min = getMin(abas[1], abas[1+1]);
+    #for (int j = 0; j < 9; j = j + 1;) {
+        #min = getMin(abas[1], abas[1+1]);
         max = getMax(abas[1], abas[1+1]);
         abas[1] = min;
         abas[1+1] = max;
@@ -46,7 +46,7 @@ func int main() {
         #else {
         #    c = abas[j];
         #}
-    }
+    #}
     
     for (int i = 0; i < 10; i = i+1;) {
         print(abas[i]);
