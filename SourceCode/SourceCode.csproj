@@ -11,16 +11,20 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Antlr4" Version="4.6.6">
-        <PrivateAssets>all</PrivateAssets>
-        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      </PackageReference>
-        <PackageReference Include="Antlr4.Runtime" Version="4.6.6" />
-        <PackageReference Include="LLVMSharp" Version="16.0.0" />
+        <PackageReference Include="Antlr4" Version="4.6.6">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Antlr4.Runtime" Version="4.6.6"/>
+        <PackageReference Include="LLVMSharp" Version="16.0.0"/>
     </ItemGroup>
 
     <ItemGroup>
-      <Content Include="AntlrClasses\AbaScript.g4" />
+        <Content Include="AbaScript.g4"/>
     </ItemGroup>
-    
+
+    <ItemGroup>
+        <Folder Include="logs\"/>
+    </ItemGroup>
+
 </Project>
