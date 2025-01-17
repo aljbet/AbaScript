@@ -81,7 +81,6 @@ public partial class AbaScriptInterpreter
         }
         else
         {
-            // Присвоение переменной или ячейке массива
             var varName = context.ID().GetText();
 
             if (expressions.Length == 2)

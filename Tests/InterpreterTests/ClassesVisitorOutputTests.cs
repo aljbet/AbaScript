@@ -6,7 +6,7 @@ using FluentAssertions;
 namespace Tests.InterpreterTests;
 
 [TestFixture]
-public class ClassesVisitorOutputTests
+public class ClassesVisitorOutputTests : InterpreterTestBase
 {
     [Test]
     public void ShouldPrintMethodResultFromClass()

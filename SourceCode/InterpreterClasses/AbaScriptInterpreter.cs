@@ -72,4 +72,23 @@ public partial class AbaScriptInterpreter : AbaScriptBaseVisitor<object>
 
         return input; // возврат как строку, если не удалось привести к int
     }
+    
+    private Dictionary<string, Variable> CaptureCurrentScope()
+    {
+        return _variables.ToDictionary(entry => entry.Key, entry => entry.Value);
+    }
+    
+    private void RestoreScopeExcludingNewVariables(Dictionary<string, Variable> oldVariables)
+    {
+        var keysToRemove = _variables.Keys.Except(oldVariables.Keys).ToList();
+        foreach (var key in keysToRemove)
+        {
+            _variables.Remove(key);
+        }
+
+        foreach (var kvp in oldVariables.Where(kvp => _variables.ContainsKey(kvp.Key)))
+        {
+            _variables[kvp.Key] = kvp.Value;
+        }
+    }
 }

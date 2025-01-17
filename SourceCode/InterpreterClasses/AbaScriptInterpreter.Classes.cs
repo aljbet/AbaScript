@@ -28,7 +28,7 @@ public partial class AbaScriptInterpreter
             }
 
         _classDefinitions[className] = classDef;
-        _logger.Log($"Класс {className} определен.");
+        _logger.Log($"Class '{className}' defined.");
         return null;
     }
 
@@ -37,36 +37,37 @@ public partial class AbaScriptInterpreter
         var instanceName = context.ID(0).GetText();
         var methodName = context.ID(1).GetText();
 
-        if (!_classInstances.TryGetValue(instanceName, out var instance))
-            throw new InvalidOperationException($"Экземпляр '{instanceName}' не существует.");
-        
-        var className = instance.GetType().Name;
-        if (!_classDefinitions[className].Methods.TryGetValue(methodName, out var methodInfo))
-            throw new InvalidOperationException($"Метод '{methodName}' не определён в классе '{className}'.");
+        if (!_classInstances.TryGetValue(instanceName, out var instanceWrapper))
+            throw new InvalidOperationException($"Instance '{instanceName}' does not exist.");
 
-        var arguments = context.expr().Select<AbaScriptParser.ExprContext, object>(expr => Visit(expr)).ToList();
+        var className = instanceWrapper.ClassName;
+
+        if (!_classDefinitions.TryGetValue(className, out var classDefinition) ||
+            !classDefinition.Methods.TryGetValue(methodName, out var methodInfo))
+            throw new InvalidOperationException($"Method '{methodName}' not defined in class '{className}'.");
+
+
+        var arguments = context.expr().Select(Visit).ToList();
         if (arguments.Count != methodInfo.Parameters.Count)
-            throw new InvalidOperationException($"Количество аргументов не совпадает для метода '{methodName}'.");
+            throw new InvalidOperationException($"Incorrect number of arguments for method '{methodName}'.");
 
         for (var i = 0; i < arguments.Count; i++)
         {
             var expectedType = methodInfo.Parameters[i].type;
             if (!CheckType(expectedType, arguments[i]))
                 throw new InvalidOperationException(
-                    $"Аргумент {i} метода {methodName} должен быть типа {expectedType}.");
+                    $"Argument {i + 1} of method '{methodName}' must be of type '{expectedType}'.");
         }
 
-        // Локальные переменные метода
-        var oldVariables = new Dictionary<string, Variable>(_variables);
-        _variables.Clear();
 
-        // Инициализируем параметры
+        var oldVariables = CaptureCurrentScope();
+
         for (var i = 0; i < arguments.Count; i++)
         {
             var parameterType = Enum.Parse<VariableType>(methodInfo.Parameters[i].type, true);
             _variables[methodInfo.Parameters[i].name] = new Variable(parameterType, arguments[i]);
         }
-
+        
         try
         {
             Visit(methodInfo.Body);
@@ -75,14 +76,14 @@ public partial class AbaScriptInterpreter
         {
             if (!CheckType(methodInfo.ReturnType, ex.ReturnValue))
                 throw new InvalidOperationException(
-                    $"Возвращаемое значение метода {methodName} должно быть типа {methodInfo.ReturnType}.");
+                    $"Return value of method '{methodName}' must be of type '{methodInfo.ReturnType}'.");
+
+            RestoreScopeExcludingNewVariables(oldVariables);
             return ex.ReturnValue;
         }
         finally
         {
-            _variables.Clear();
-            foreach (var kvp in oldVariables)
-                _variables[kvp.Key] = kvp.Value;
+            RestoreScopeExcludingNewVariables(oldVariables);
         }
 
         return null;

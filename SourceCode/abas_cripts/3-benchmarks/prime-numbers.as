@@ -12,15 +12,17 @@ func int isPrimeNumber(int i, int isPrime) {
        isPrime = isPrime * checkDiv(i, j);
     }
     if (isPrime == 1) {
-        print(i);
+        return i;
     }
-    else {}
+    else {
+        return -i;
+    }
 }
 
 func int main() {
     int n = 20;
     int a;
     for (int i = 2; i <= n; i = i + 1;) {
-        a = isPrimeNumber(i, 1);
+        print(isPrimeNumber(i, 1));
     }
 }
