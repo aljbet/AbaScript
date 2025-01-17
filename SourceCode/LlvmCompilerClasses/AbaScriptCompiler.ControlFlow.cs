@@ -56,10 +56,10 @@ public partial class AbaScriptCompiler
 
         var preheaderBB = _builder.InsertBlock;
         var func = preheaderBB.Parent;
-        var loopBB =  LLVMBasicBlockRef.AppendInContext(_context, func, "loop");
+        var loopBB = LLVMBasicBlockRef.AppendInContext(_context, func, "loop");
         _builder.BuildBr(loopBB);
         _builder.PositionAtEnd(loopBB);
-        
+
         // var phi = _builder.BuildPhi(_context.GetIntType(32), "phi");
         // phi.AddIncoming(new []{startValue}, new []{preheaderBB}, 1);
 
@@ -72,18 +72,20 @@ public partial class AbaScriptCompiler
         {
             Visit(context.assignment(1));
         }
+
         var nextValue = _valueStack.Pop();
         Visit(context.logicalExpr());
         var logExprValue = _valueStack.Pop();
 
         var loopEndBB = _builder.InsertBlock;
-        var afterBB =  LLVMBasicBlockRef.AppendInContext(_context, func, "afterloop");
+        var afterBB = LLVMBasicBlockRef.AppendInContext(_context, func, "afterloop");
 
         _builder.BuildCondBr(logExprValue, loopBB, afterBB);
         _builder.PositionAtEnd(afterBB);
-        
+
         // phi.AddIncoming(new []{nextValue}, new []{loopEndBB}, 1);
         _valueStack.Push(LLVMValueRef.CreateConstInt(_context.GetIntType(1), 0));
+
         return context;
     }
 }

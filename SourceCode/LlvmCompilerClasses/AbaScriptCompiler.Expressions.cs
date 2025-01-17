@@ -211,7 +211,7 @@ public partial class AbaScriptCompiler
             Visit(statement);
         }
         
-        // _valueStack.Push(_builder.InsertBlock.AsValue());
+        _valueStack.Push(_builder.InsertBlock.AsValue());
 
         return context;
     }
