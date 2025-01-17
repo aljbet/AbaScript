@@ -11,8 +11,8 @@ public partial class AbaScriptInterpreter
         var returnType = context.returnType().GetText();
         var parameters = context.typedParam().Select(p => (p.type().GetText(), p.ID().GetText())).ToList();
 
-        functions[funcName] = (parameters, returnType, context.block());
-        logger.Log(
+        _functions[funcName] = (parameters, returnType, context.block());
+        _logger.Log(
             $"Функция {funcName} определена с параметрами: {string.Join(", ", parameters.Select(p => $"{p.Item1} {p.Item2}"))}");
         return null;
     }
@@ -21,7 +21,7 @@ public partial class AbaScriptInterpreter
     {
         var funcName = context.ID().GetText();
 
-        if (!functions.TryGetValue(funcName, out var functionInfo))
+        if (!_functions.TryGetValue(funcName, out var functionInfo))
             throw new InvalidOperationException($"Функция '{funcName}' не определена.");
 
         var arguments = context.expr().Select(expr => Visit(expr)).ToList();
@@ -37,18 +37,18 @@ public partial class AbaScriptInterpreter
         }
 
         // Сохраняем текущие переменные, чтобы не мешать глобальному состоянию
-        var oldVariables = new Dictionary<string, Variable>(variables);
+        var oldVariables = new Dictionary<string, Variable>(_variables);
 
-        variables.Clear();
+        _variables.Clear();
         for (var i = 0; i < arguments.Count; i++)
         {
             var parameterType = Enum.Parse<VariableType>(functionInfo.Parameters[i].type, true);
-            variables[functionInfo.Parameters[i].name] = new Variable(parameterType, arguments[i]);
+            _variables[functionInfo.Parameters[i].name] = new Variable(parameterType, arguments[i]);
         }
 
         try
         {
-            Visit(functionInfo.Body);
+            return Visit(functionInfo.Body);
         }
         catch (ReturnException ex)
         {
@@ -61,9 +61,9 @@ public partial class AbaScriptInterpreter
         finally
         {
             // Восстанавливаем переменные
-            variables.Clear();
+            _variables.Clear();
             foreach (var kvp in oldVariables)
-                variables[kvp.Key] = kvp.Value;
+                _variables[kvp.Key] = kvp.Value;
         }
 
         return null;

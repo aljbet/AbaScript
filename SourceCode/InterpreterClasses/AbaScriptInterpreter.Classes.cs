@@ -27,8 +27,8 @@ public partial class AbaScriptInterpreter
                 classDef.Methods[funcName] = (parameters, returnType, member.functionDef().block());
             }
 
-        classDefinitions[className] = classDef;
-        logger.Log($"Класс {className} определен.");
+        _classDefinitions[className] = classDef;
+        _logger.Log($"Класс {className} определен.");
         return null;
     }
 
@@ -37,11 +37,11 @@ public partial class AbaScriptInterpreter
         var instanceName = context.ID(0).GetText();
         var methodName = context.ID(1).GetText();
 
-        if (!classInstances.TryGetValue(instanceName, out var instance))
+        if (!_classInstances.TryGetValue(instanceName, out var instance))
             throw new InvalidOperationException($"Экземпляр '{instanceName}' не существует.");
         
         var className = instance.GetType().Name;
-        if (!classDefinitions[className].Methods.TryGetValue(methodName, out var methodInfo))
+        if (!_classDefinitions[className].Methods.TryGetValue(methodName, out var methodInfo))
             throw new InvalidOperationException($"Метод '{methodName}' не определён в классе '{className}'.");
 
         var arguments = context.expr().Select<AbaScriptParser.ExprContext, object>(expr => Visit(expr)).ToList();
@@ -57,14 +57,14 @@ public partial class AbaScriptInterpreter
         }
 
         // Локальные переменные метода
-        var oldVariables = new Dictionary<string, Variable>(variables);
-        variables.Clear();
+        var oldVariables = new Dictionary<string, Variable>(_variables);
+        _variables.Clear();
 
         // Инициализируем параметры
         for (var i = 0; i < arguments.Count; i++)
         {
             var parameterType = Enum.Parse<VariableType>(methodInfo.Parameters[i].type, true);
-            variables[methodInfo.Parameters[i].name] = new Variable(parameterType, arguments[i]);
+            _variables[methodInfo.Parameters[i].name] = new Variable(parameterType, arguments[i]);
         }
 
         try
@@ -80,9 +80,9 @@ public partial class AbaScriptInterpreter
         }
         finally
         {
-            variables.Clear();
+            _variables.Clear();
             foreach (var kvp in oldVariables)
-                variables[kvp.Key] = kvp.Value;
+                _variables[kvp.Key] = kvp.Value;
         }
 
         return null;

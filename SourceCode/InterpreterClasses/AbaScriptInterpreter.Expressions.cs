@@ -11,7 +11,7 @@ public partial class AbaScriptInterpreter
         var right = Visit(context.term());
         var operatorText = context.GetChild(1).GetText();
 
-        logger.Log($"left={left}, right={right}, leftType={left?.GetType()}, rightType={right?.GetType()}");
+        _logger.Log($"left={left}, right={right}, leftType={left?.GetType()}, rightType={right?.GetType()}");
 
         return operatorText switch
         {
@@ -27,7 +27,7 @@ public partial class AbaScriptInterpreter
         var right = Visit(context.factor());
         var operatorText = context.GetChild(1).GetText();
 
-        logger.Log($"left={left}, right={right}, leftType={left?.GetType()}, rightType={right?.GetType()}");
+        _logger.Log($"left={left}, right={right}, leftType={left?.GetType()}, rightType={right?.GetType()}");
 
         return operatorText switch
         {
@@ -103,13 +103,13 @@ public partial class AbaScriptInterpreter
         {
             var className = newClassContext.ID().GetText();
             // Создаём экземпляр класса (концептуально)
-            if (!classDefinitions.ContainsKey(className))
+            if (!_classDefinitions.ContainsKey(className))
                 throw new InvalidOperationException($"Класс '{className}' не определен.");
 
             var newInstance = new ClassInstance();
             // Инициализируем поля дефолтными значениями
             // (в зависимости от того, что нужно вашей логике)
-            logger.Log($"Создан новый объект класса {className}.");
+            _logger.Log($"Создан новый объект класса {className}.");
 
             // Возвращаем сам объект, чтобы его можно было присвоить
             return newInstance;
