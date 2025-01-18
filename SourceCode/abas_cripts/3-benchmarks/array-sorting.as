@@ -11,9 +11,7 @@ func int main() {
     abas[7] = 17;
     abas[8] = 8;
     abas[9] = 14;
-    
-    int min;
-    int max;
+
     int i;
     int j;
     int c;
@@ -27,6 +25,7 @@ func int main() {
             else {}
         }
     }
+    
     for (i = 0; i < n; i = i + 1;) {
         print(abas[i]);
     }

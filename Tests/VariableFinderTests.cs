@@ -26,7 +26,7 @@ public class VariableFinderTests
     {
         var result = _variableFinder.FindByShortName("ab", _variables);
         Assert.IsNotNull(result);
-        Assert.AreEqual("abas", result.GetName());
+        Assert.That(result.GetName(), Is.EqualTo("abas"));
     }
 
     [Test]

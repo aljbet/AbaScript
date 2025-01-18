@@ -106,6 +106,7 @@ public class AbaScriptTypeChecker : AbaScriptBaseVisitor<AbaType>
         {
             type.IsArray = true;
         }
+
         var varName = context.ID().GetText();
 
         if (_currentScope.variables.ContainsKey(varName))
@@ -183,10 +184,10 @@ public class AbaScriptTypeChecker : AbaScriptBaseVisitor<AbaType>
 
         return AbaType.Int;
     }
-    
+
     public override AbaType VisitVariableOrArrayAccess(AbaScriptParser.VariableOrArrayAccessContext context)
     {
-        if (context.expr() == null) 
+        if (context.expr() == null)
         {
             var identifier = context.ID().GetText();
             var type = _currentScope.Resolve(identifier);
@@ -194,6 +195,7 @@ public class AbaScriptTypeChecker : AbaScriptBaseVisitor<AbaType>
             {
                 throw new TypeCheckerException($"Variable '{identifier}' not defined.");
             }
+
             return type;
         }
         else

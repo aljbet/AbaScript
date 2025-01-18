@@ -10,14 +10,14 @@ public partial class AbaScriptCompiler
         var argumentCount = context.typedParam().Length;
         var arguments = new LLVMTypeRef[argumentCount];
         var funcName = context.ID().GetText();
-        
+
         var calleeF = _module.GetNamedFunction(funcName);
 
         if (calleeF != null)
         {
             throw new InvalidOperationException($"Функция '{funcName}' уже определена.");
         }
-        
+
         var parameters = context.typedParam().Select(p => (p.type().GetText(), p.ID().GetText())).ToList();
         for (var i = 0; i < argumentCount; ++i)
         {
@@ -35,7 +35,7 @@ public partial class AbaScriptCompiler
         // Create a new basic block to start insertion into.
         var block = function.AppendBasicBlock("entry");
         _builder.PositionAtEnd(block);
-        
+
         for (int i = 0; i < argumentCount; ++i)
         {
             string argumentName = parameters[i].Item2;
@@ -46,13 +46,14 @@ public partial class AbaScriptCompiler
 
             var alloca = _builder.BuildAlloca(argumentTy);
             _builder.BuildStore(param, alloca);
-            
+
             _scopeManager[argumentName] = new AllocaInfo(alloca, argumentTy);
         }
 
         try
         {
             Visit(context.block());
+            _valueStack.Pop();
         }
         catch (Exception)
         {
@@ -61,7 +62,7 @@ public partial class AbaScriptCompiler
             _funcTypes.Remove(funcName);
             throw;
         }
-        
+
         // Finish off the function.
         _builder.BuildRet(LLVMValueRef.CreateConstInt(_intType, 0));
         ClearAfterReturn(block);
@@ -78,9 +79,9 @@ public partial class AbaScriptCompiler
 
         _logger.Log(
             $"Функция {funcName} определена с параметрами: {string.Join(", ", parameters.Select(p => $"{p.Item1} {p.Item2}"))}");
-        
+
         _scopeManager.ExitScope();
-        
+
         return context;
     }
 
@@ -105,7 +106,7 @@ public partial class AbaScriptCompiler
         {
             throw new InvalidOperationException($"Количество аргументов не совпадает для функции '{funcName}'.");
         }
-        
+
         for (var i = 0; i < arguments.Count; i++)
         {
             var expectedType = calleeF.Params[i].TypeOf.Kind;
@@ -119,7 +120,7 @@ public partial class AbaScriptCompiler
         _valueStack.Push(_builder.BuildCall2(funcType, calleeF, arguments.ToArray()));
         return context;
     }
-    
+
     public override object VisitReturnStatement(AbaScriptParser.ReturnStatementContext context)
     {
         Visit(context.expr());

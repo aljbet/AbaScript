@@ -11,23 +11,25 @@ public partial class AbaScriptCompiler
 
         var varType = context.type().GetText();
         var varName = context.ID().GetText();
-        
+
         var varTypeLlvm = TypeMatch(varType);
 
         if (context.NUMBER() != null) // array
         {
             var size = ulong.Parse(context.NUMBER().GetText());
-            var sizeLlvm = LLVMValueRef.CreateConstInt(_context.Int32Type, size);
+            var sizeLlvm = LLVMValueRef.CreateConstInt(_intType, size);
             var malloc = _builder.BuildArrayMalloc(varTypeLlvm, sizeLlvm);
-            
+
             var alloca = _builder.BuildAlloca(varTypeLlvm);
             alloca.Name = varName;
-            
+
             _scopeManager[varName] = new ArrayAllocaInfo(alloca, varTypeLlvm, size);
 
             _builder.BuildStore(malloc, alloca);
         }
-        else { // int
+        else
+        {
+            // int
             LLVMValueRef value;
             if (context.expr() != null)
             {
@@ -40,12 +42,13 @@ public partial class AbaScriptCompiler
             {
                 value = LLVMValueRef.CreateConstInt(_intType, 0); // default value
             }
+
             var alloca = _builder.BuildAlloca(varTypeLlvm);
             alloca.Name = varName;
             _valueStack.Push(_builder.BuildStore(value, alloca));
 
             _scopeManager[varName] = new AllocaInfo(alloca, varTypeLlvm);
-            
+
             _logger.Log($"Переменная {varName} объявлена со значением: {value} (тип: {varType})");
         }
 
@@ -64,14 +67,15 @@ public partial class AbaScriptCompiler
 
             Visit(expressions[1]);
             var value = _valueStack.Pop();
-            
+
             if (!_scopeManager.TryGetValue(varName, out var variable) || !(variable is ArrayAllocaInfo))
                 throw new InvalidOperationException($"Переменная '{varName}' не объявлена или не является массивом.");
-            
+
             if (value.TypeOf.Kind != variable.Ty.Kind)
                 throw new InvalidOperationException($"Переменная {varName} должна быть типа {variable.Ty.Kind}.");
 
-            LLVMValueRef vectorIndexPtr = _builder.BuildGEP2(variable.Ty, variable.Alloca, new LLVMValueRef[] { index });
+            LLVMValueRef vectorIndexPtr =
+                _builder.BuildGEP2(variable.Ty, variable.Alloca, new LLVMValueRef[] { index });
             _builder.BuildStore(value, vectorIndexPtr);
         }
         else
@@ -81,7 +85,7 @@ public partial class AbaScriptCompiler
 
             if (!_scopeManager.TryGetValue(varName, out var variable))
                 throw new InvalidOperationException($"Переменная '{varName}' не объявлена.");
-            
+
             if (value.TypeOf.Kind != variable.Ty.Kind)
                 throw new InvalidOperationException($"Переменная {varName} должна быть типа {variable.Ty.Kind}.");
 
@@ -102,9 +106,11 @@ public partial class AbaScriptCompiler
             var index = _valueStack.Pop();
 
             if (!_scopeManager.TryGetValue(variableName, out var variable) || !(variable is ArrayAllocaInfo))
-                throw new InvalidOperationException($"Переменная '{variableName}' не объявлена или не является массивом.");
-            
-            LLVMValueRef vectorIndexPtr = _builder.BuildGEP2(variable.Ty, variable.Alloca, new LLVMValueRef[] { index });
+                throw new InvalidOperationException(
+                    $"Переменная '{variableName}' не объявлена или не является массивом.");
+
+            LLVMValueRef vectorIndexPtr =
+                _builder.BuildGEP2(variable.Ty, variable.Alloca, new LLVMValueRef[] { index });
             _valueStack.Push(_builder.BuildLoad2(variable.Ty, vectorIndexPtr));
         }
         else // int
@@ -147,13 +153,13 @@ public partial class AbaScriptCompiler
     public override object VisitOutputStatement(AbaScriptParser.OutputStatementContext context)
     {
         // TODO: пока что подразумевается, что принтится int (для элементов массива тоже работает)
-        
+
         Visit(context.expr());
         var currentElement = _valueStack.Pop();
-        
-        var printFnTy = LLVMTypeRef.CreateFunction(_context.Int32Type, new[] {_intType});
-        var call = _builder.BuildCall2(printFnTy, GetOrCreatePrintFunc(), new[] {currentElement});
-        
+
+        var printFnTy = LLVMTypeRef.CreateFunction(_context.Int32Type, new[] { _intType });
+        var call = _builder.BuildCall2(printFnTy, GetOrCreatePrintFunc(), new[] { currentElement });
+
         _valueStack.Push(call);
         // // switch (currentElement.TypeOf.Kind)
         // // {
@@ -190,24 +196,25 @@ public partial class AbaScriptCompiler
     private LLVMValueRef GetOrCreatePrintFunc()
     {
         var printName = "$print";
-        var printFnTy = LLVMTypeRef.CreateFunction(_context.Int32Type, new[] {_intType});
+        var printFnTy = LLVMTypeRef.CreateFunction(_context.Int64Type, new[] { _intType });
         var printFn = _module.GetNamedFunction(printName);
         if (printFn != null)
         {
             return printFn;
         }
-        
+
         printFn = _module.AddFunction(printName, printFnTy);
         _builder.PositionAtEnd(printFn.AppendBasicBlock("entry"));
-        
-        LLVMTypeRef argumentTy = LLVMTypeRef.Int32;
+
+        LLVMTypeRef argumentTy = LLVMTypeRef.Int64;
         LLVMValueRef param = printFn.Params[0];
         param.Name = "x";
         var alloca = _builder.BuildAlloca(argumentTy);
         _builder.BuildStore(param, alloca);
-        
+
         var funcName = "puts"; // можно поменять на printf
-        var putsFnTy = LLVMTypeRef.CreateFunction(_context.Int32Type, new[] {LLVMTypeRef.CreatePointer(_context.Int8Type, 0)});
+        var putsFnTy = LLVMTypeRef.CreateFunction(_context.Int32Type,
+            new[] { LLVMTypeRef.CreatePointer(_context.Int8Type, 0) });
         var putsFn = _module.GetNamedFunction(funcName);
         if (putsFn == null)
         {
@@ -215,17 +222,19 @@ public partial class AbaScriptCompiler
         }
 
         var ptrType = LLVMTypeRef.CreatePointer(_context.Int8Type, 0);
-        
+
         var buffer = _builder.BuildAlloca(ptrType, "print.buffer");
-        var bufferSize = LLVMValueRef.CreateConstInt(_context.Int32Type, 1024 * 4); // TODO: подумать каким должен быть N
+        var bufferSize =
+            LLVMValueRef.CreateConstInt(_context.Int32Type, 1024 * 4); // TODO: подумать каким должен быть N
         _builder.BuildStore(_builder.BuildArrayMalloc(_context.Int8Type, bufferSize), buffer);
         var originalBuffer = _builder.BuildLoad2(ptrType, buffer);
-        
+
         // save value to buff
         var currentElement = _builder.BuildLoad2(argumentTy, alloca);
-        var args = new[]{originalBuffer, _builder.BuildGlobalStringPtr("%d"), currentElement};
+        var args = new[] { originalBuffer, _builder.BuildGlobalStringPtr("%I64d"), currentElement };
         var sprintfFn = _module.GetNamedFunction("sprintf");
-        var sprintfFnTy = LLVMTypeRef.CreateFunction(_context.Int32Type, new[] {
+        var sprintfFnTy = LLVMTypeRef.CreateFunction(_context.Int32Type, new[]
+        {
             LLVMTypeRef.CreatePointer(_context.Int8Type, 0),
             LLVMTypeRef.CreatePointer(_context.Int8Type, 0)
         }, true);
@@ -233,19 +242,19 @@ public partial class AbaScriptCompiler
         {
             sprintfFn = _module.AddFunction("sprintf", sprintfFnTy);
         }
-        
+
         _builder.BuildCall2(sprintfFnTy, sprintfFn, args);
-        
+
         // print
-        _builder.BuildCall2(putsFnTy, putsFn, new []{ originalBuffer });
-        
+        _builder.BuildCall2(putsFnTy, putsFn, new[] { originalBuffer });
+
         _builder.BuildFree(originalBuffer);
-        
-        _builder.BuildRet(LLVMValueRef.CreateConstInt(_context.Int32Type, 0));
+
+        _builder.BuildRet(LLVMValueRef.CreateConstInt(_context.Int64Type, 0));
 
         // Validate the generated code, checking for consistency.
         printFn.VerifyFunction(LLVMVerifierFailureAction.LLVMAbortProcessAction);
-        
+
         return printFn;
     }
 }

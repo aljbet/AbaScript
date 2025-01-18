@@ -12,7 +12,7 @@ public partial class AbaScriptCompiler : AbaScriptBaseVisitor<object>
     private readonly ScopeManager<AllocaInfo> _scopeManager = new();
     private readonly Dictionary<string, LLVMTypeRef> _funcTypes = new();
     private readonly LLVMTypeRef _intType;
-    
+
     private LLVMModuleRef _module;
     private LLVMBuilderRef _builder;
     private LLVMContextRef _context;
@@ -22,7 +22,7 @@ public partial class AbaScriptCompiler : AbaScriptBaseVisitor<object>
         _context = context;
         _module = module;
         _builder = builder;
-        _intType = _context.GetIntType(32);
+        _intType = _context.GetIntType(64);
     }
 
     public override object VisitScript(AbaScriptParser.ScriptContext context)
@@ -72,6 +72,7 @@ public partial class AbaScriptCompiler : AbaScriptBaseVisitor<object>
 
         return input;
     }
+
     private static bool CheckType(string type, LLVMTypeKind valueType)
     {
         return Enum.TryParse(type, true, out VariableType variableType) && variableType switch
