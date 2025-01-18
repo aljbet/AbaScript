@@ -4,6 +4,7 @@ namespace CompileLanguage.InterpreterClasses;
 
 public partial class CompiledAbaScriptInterpreter
 {
+    private int _jumpDestination = -1;
     public override object? VisitJmpInstruction(CompiledAbaScriptParser.JmpInstructionContext ctx) => JumpToLabel(ctx.labelRef().ID().GetText());
 
     public override object? VisitJmpIfInstruction(CompiledAbaScriptParser.JmpIfInstructionContext ctx)
@@ -21,9 +22,7 @@ public partial class CompiledAbaScriptInterpreter
         {
             throw new RuntimeException("Label not found: " + labelName);
         }
-        var labelIndex = _labels[labelName];
-        _statements = _statements.Skip(labelIndex).ToList();
-        ExecuteStatements();
+        _jumpDestination = _labels[labelName];
         return null;
     }
 

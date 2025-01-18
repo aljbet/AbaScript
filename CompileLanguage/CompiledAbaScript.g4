@@ -75,13 +75,6 @@ value: NUMBER;
 // A label reference is an identifier used in jump instructions.
 labelRef: ID;
 
-ID  : [a-zA-Z_][a-zA-Z0-9_]*;
-NUMBER : [0-9]+ ;
-STRING : '"' ('\\"'|.)*? '"';
-
-WS : [ \t\r\n]+ -> skip ;
-COMMENT : '#' ~[\r\n]* -> skip ;
-
 LOAD: 'LOAD';
 STORE: 'STORE';
 PUSH: 'PUSH';
@@ -97,3 +90,10 @@ CALL: 'CALL';
 RET: 'RET';
 PRINT: 'PRINT';
 HALT: 'HALT';
+
+ID  : [a-zA-Z_][a-zA-Z0-9_]*;
+NUMBER : [0-9]+ ;
+STRING : '"' ('\\"'|.)*? '"';
+
+WS : [ \t\r\n]+ -> skip ;
+COMMENT : '#' ~[\r\n]* -> skip ;

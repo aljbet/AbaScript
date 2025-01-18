@@ -1,4 +1,7 @@
-﻿namespace CompileLanguage.InterpreterClasses;
+﻿using Antlr4.Runtime;
+using Antlr4.Runtime.Tree;
+
+namespace CompileLanguage.InterpreterClasses;
 
 public partial class CompiledAbaScriptInterpreter : CompiledAbaScriptBaseVisitor<object?>
 {
@@ -7,9 +10,11 @@ public partial class CompiledAbaScriptInterpreter : CompiledAbaScriptBaseVisitor
     private readonly Dictionary<string, int> _variables = new();
     private IList<CompiledAbaScriptParser.StatementContext> _statements;
 
-    public void Interpret(CompiledAbaScriptParser.ProgramContext program)
+    public void Interpret(string input)
     {
-        _statements = program.statement();
+        var lexer = new CompiledAbaScriptLexer(new AntlrInputStream(input));
+        var parser = new CompiledAbaScriptParser(new CommonTokenStream(lexer));
+        _statements = parser.program().statement();
         for (var i = 0; i < _statements.Count; i++)
         {
             var stmt = _statements[i];
@@ -21,6 +26,20 @@ public partial class CompiledAbaScriptInterpreter : CompiledAbaScriptBaseVisitor
 
     private void ExecuteStatements()
     {
-        foreach (var t in _statements) Visit(t);
+        for (var i = 0; i < _statements.Count; i++)
+        {
+            if (_statements.Count == 0)
+            {
+                break;
+            }
+
+            Visit(_statements[i]);
+
+            if (_jumpDestination != -1)
+            {
+                i = _jumpDestination -1;
+                _jumpDestination = -1;
+            }
+        }
     }
 }
