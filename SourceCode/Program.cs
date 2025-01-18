@@ -1,6 +1,6 @@
 ﻿using System.Reflection;
-using AbaScript;
 using AbaScript.AntlrClasses;
+using AbaScript.InterpreterClasses;
 using AbaScript.LlvmCompilerClasses;
 using Antlr4.Runtime;
 using LLVMSharp.Interop;
@@ -8,6 +8,7 @@ using LLVMSharp.Interop;
 // var curFileName = "3-benchmarks\\array-sorting.as";
 // var curFileName = "3-benchmarks\\factorial.as";
 var curFileName = "3-benchmarks\\prime-numbers.as";
+// var curFileName = "functions.as";
 var path = Path.GetDirectoryName(Assembly.GetEntryAssembly()?.Location)
            + "\\..\\..\\..\\..\\abas_cripts\\" + curFileName;
 var input = File.ReadAllText(path);
@@ -33,7 +34,7 @@ var context = LLVMContextRef.Create();
 var module = context.CreateModuleWithName("AbaScript");
 var builder = context.CreateBuilder();
 var visitor = new AbaScriptCompiler(context, module, builder);
-// var visitor = new AbaScriptCustomVisitor();
+// var visitor = new AbaScriptInterpreter();
 visitor.Visit(tree);
 Console.WriteLine($"LLVM IR\n=========\n{module}");
 
