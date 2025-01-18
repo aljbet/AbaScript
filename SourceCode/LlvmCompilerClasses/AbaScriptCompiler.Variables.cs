@@ -17,7 +17,7 @@ public partial class AbaScriptCompiler
         if (context.NUMBER() != null) // array
         {
             var size = ulong.Parse(context.NUMBER().GetText());
-            var sizeLlvm = LLVMValueRef.CreateConstInt(_context.Int32Type, size);
+            var sizeLlvm = LLVMValueRef.CreateConstInt(_intType, size);
             var malloc = _builder.BuildArrayMalloc(varTypeLlvm, sizeLlvm);
 
             var alloca = _builder.BuildAlloca(varTypeLlvm);
@@ -196,7 +196,7 @@ public partial class AbaScriptCompiler
     private LLVMValueRef GetOrCreatePrintFunc()
     {
         var printName = "$print";
-        var printFnTy = LLVMTypeRef.CreateFunction(_context.Int32Type, new[] { _intType });
+        var printFnTy = LLVMTypeRef.CreateFunction(_context.Int64Type, new[] { _intType });
         var printFn = _module.GetNamedFunction(printName);
         if (printFn != null)
         {
@@ -206,7 +206,7 @@ public partial class AbaScriptCompiler
         printFn = _module.AddFunction(printName, printFnTy);
         _builder.PositionAtEnd(printFn.AppendBasicBlock("entry"));
 
-        LLVMTypeRef argumentTy = LLVMTypeRef.Int32;
+        LLVMTypeRef argumentTy = LLVMTypeRef.Int64;
         LLVMValueRef param = printFn.Params[0];
         param.Name = "x";
         var alloca = _builder.BuildAlloca(argumentTy);
@@ -231,7 +231,7 @@ public partial class AbaScriptCompiler
 
         // save value to buff
         var currentElement = _builder.BuildLoad2(argumentTy, alloca);
-        var args = new[] { originalBuffer, _builder.BuildGlobalStringPtr("%d"), currentElement };
+        var args = new[] { originalBuffer, _builder.BuildGlobalStringPtr("%I64d"), currentElement };
         var sprintfFn = _module.GetNamedFunction("sprintf");
         var sprintfFnTy = LLVMTypeRef.CreateFunction(_context.Int32Type, new[]
         {
@@ -250,7 +250,7 @@ public partial class AbaScriptCompiler
 
         _builder.BuildFree(originalBuffer);
 
-        _builder.BuildRet(LLVMValueRef.CreateConstInt(_context.Int32Type, 0));
+        _builder.BuildRet(LLVMValueRef.CreateConstInt(_context.Int64Type, 0));
 
         // Validate the generated code, checking for consistency.
         printFn.VerifyFunction(LLVMVerifierFailureAction.LLVMAbortProcessAction);

@@ -22,7 +22,7 @@ public partial class AbaScriptCompiler : AbaScriptBaseVisitor<object>
         _context = context;
         _module = module;
         _builder = builder;
-        _intType = _context.GetIntType(32);
+        _intType = _context.GetIntType(64);
     }
 
     public override object VisitScript(AbaScriptParser.ScriptContext context)
