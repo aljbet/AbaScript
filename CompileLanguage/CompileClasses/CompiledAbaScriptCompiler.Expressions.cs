@@ -1,6 +1,6 @@
 ﻿namespace CompileLanguage.CompileClasses;
 
-public class CompiledAbaScriptCompiler_Expressions
+public partial class CompiledAbaScriptCompiler
 {
     
 }
