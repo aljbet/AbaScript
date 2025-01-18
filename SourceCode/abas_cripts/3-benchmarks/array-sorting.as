@@ -1,5 +1,6 @@
 func int main() {
     int abas[10];
+    int n = 10;
     abas[0] = 3;
     abas[1] = 9;
     abas[2] = 13;
@@ -10,13 +11,11 @@ func int main() {
     abas[7] = 17;
     abas[8] = 8;
     abas[9] = 14;
-    
-    int min;
-    int max;
-    int c;
+
     int i;
     int j;
-    for (i = 9; i >= 0; i = i - 1;) {
+    int c;
+    for (i = n - 1; i >= 0; i = i - 1;) {
         for (j = 0; j < i; j = j + 1;) {
             if (abas[j] > abas[j+1]) {
                 c = abas[j];
@@ -27,7 +26,7 @@ func int main() {
         }
     }
     
-    for (i = 0; i < 10; i = i+1;) {
+    for (i = 0; i < n; i = i + 1;) {
         print(abas[i]);
     }
 }

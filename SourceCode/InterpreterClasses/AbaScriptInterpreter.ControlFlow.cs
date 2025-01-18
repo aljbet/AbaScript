@@ -6,25 +6,31 @@ public partial class AbaScriptInterpreter
 {
     public override object VisitIfStatement(AbaScriptParser.IfStatementContext context)
     {
+        var oldVariables = CaptureCurrentScope();
+
         for (var i = 0; i < context.logicalExpr().Length; i++)
         {
             var conditionResult = (bool)Visit(context.logicalExpr(i));
             if (conditionResult)
             {
                 Visit(context.block(i));
+                RestoreScopeExcludingNewVariables(oldVariables);
                 return null;
             }
         }
 
         if (context.block().Length > context.logicalExpr().Length)
-            // Это блок else
+        {
             Visit(context.block(context.logicalExpr().Length));
+        }
 
+        RestoreScopeExcludingNewVariables(oldVariables);
         return null;
     }
 
     public override object VisitWhileStatement(AbaScriptParser.WhileStatementContext context)
     {
+        var oldVariables = CaptureCurrentScope();
         while (true)
         {
             var conditionResult = Visit(context.logicalExpr());
@@ -45,15 +51,23 @@ public partial class AbaScriptInterpreter
             catch (ContinueException) { }
         }
 
+        RestoreScopeExcludingNewVariables(oldVariables);
         return null;
     }
 
     public override object VisitForStatement(AbaScriptParser.ForStatementContext context)
     {
-        // Инициализация
+        var oldVariables = CaptureCurrentScope();
+        var assignments = context.assignment().ToList();
+
         if (context.variableDeclaration() != null)
+        {
             Visit(context.variableDeclaration());
-        else if (context.assignment(0) != null) Visit(context.assignment(0));
+        }
+        else if (assignments[0] != null)
+        {
+            Visit(context.assignment(0));
+        }
 
         while (true)
         {
@@ -77,17 +91,28 @@ public partial class AbaScriptInterpreter
             }
             catch (ContinueException)
             {
-                // Выполняем инкремент перед продолжением
                 if (context.assignment(1) != null)
+                {
                     Visit(context.assignment(1));
+                }
+
                 continue;
             }
 
-            // Инкремент
-            if (context.assignment(1) != null)
-                Visit(context.assignment(1));
+            if (assignments.Count > 1)
+            {
+                Visit(assignments[1]);
+            }
+            else
+            {
+                if (assignments.Count == 1 && context.variableDeclaration() != null)
+                {
+                    Visit(assignments[0]);
+                }
+            }
         }
 
+        RestoreScopeExcludingNewVariables(oldVariables);
         return null;
     }
 
