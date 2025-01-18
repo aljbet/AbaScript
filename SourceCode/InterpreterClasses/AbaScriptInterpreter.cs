@@ -26,11 +26,12 @@ public partial class AbaScriptInterpreter : AbaScriptBaseVisitor<object>
                 case VariableType.String:
                     return value is string;
                 case VariableType.Array:
-                    return value is object[]; 
+                    return value is object[];
                 case VariableType.Class:
                     return value != null;
             }
         }
+
         if (value is ClassInstance instance)
             return instance.ClassName == type;
         return false;

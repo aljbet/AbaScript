@@ -39,7 +39,7 @@ public partial class AbaScriptInterpreter
 
         if (!classInstances.TryGetValue(instanceName, out var instance))
             throw new InvalidOperationException($"Экземпляр '{instanceName}' не существует.");
-        
+
         var className = instance.GetType().Name;
         if (!classDefinitions[className].Methods.TryGetValue(methodName, out var methodInfo))
             throw new InvalidOperationException($"Метод '{methodName}' не определён в классе '{className}'.");

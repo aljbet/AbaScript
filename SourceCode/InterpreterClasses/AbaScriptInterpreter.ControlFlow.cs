@@ -42,9 +42,7 @@ public partial class AbaScriptInterpreter
             {
                 break;
             }
-            catch (ContinueException)
-            {
-            }
+            catch (ContinueException) { }
         }
 
         return null;

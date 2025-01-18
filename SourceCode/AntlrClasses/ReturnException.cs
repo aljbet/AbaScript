@@ -10,10 +10,6 @@ public class ReturnException : Exception
     public object ReturnValue { get; }
 }
 
-public class BreakException : Exception
-{
-}
+public class BreakException : Exception { }
 
-public class ContinueException : Exception
-{
-}
+public class ContinueException : Exception { }

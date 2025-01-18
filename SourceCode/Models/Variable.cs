@@ -6,7 +6,9 @@ public class Variable : IHaveName
     {
         Name = name;
     }
+
     public string Name { get; set; }
+
     public string GetName()
     {
         return Name;
