@@ -75,7 +75,7 @@ functionDef
 
 // Параметры функции
 typedParam
-    : type ID
+    : type ID ('[' ']')?
     ;
 
 // Вызов функции
