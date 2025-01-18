@@ -1,37 +1,33 @@
 func int main() {
-    int arr[5];
-    arr[0] = 100;
-    arr[1] = 1;
-    arr[2] = -1;
-    arr[3] = 1000;
-    arr[4] = 10000;
-    int n = 5;
-    int i = 0;
-    int j = 0;
-    int swapped = 0;
-
-    while (i < n - 1) {
-        j = 0;
-        swapped = 0;
-        while (j < n - i - 1) {
-            if (arr[j] > arr[j + 1]) {
-                int temp = arr[j];
-                arr[j] = arr[j + 1];
-                arr[j + 1] = temp;
-                swapped = 1;
+    int abas[10];
+    int n = 10;
+    abas[0] = 3;
+    abas[1] = 9;
+    abas[2] = 13;
+    abas[3] = 4;
+    abas[4] = 20;
+    abas[5] = 18;
+    abas[6] = 12;
+    abas[7] = 17;
+    abas[8] = 8;
+    abas[9] = 14;
+    
+    int min;
+    int max;
+    int i;
+    int j;
+    int c;
+    for (i = n - 1; i >= 0; i = i - 1;) {
+        for (j = 0; j < i; j = j + 1;) {
+            if (abas[j] > abas[j+1]) {
+                c = abas[j];
+                abas[j] = abas[j + 1];
+                abas[j + 1] = c; 
             }
-            j = j + 1;
+            else {}
         }
-
-        if (swapped == 0) {
-            break;
-        }
-        i = i + 1;
     }
-
-    i = 0;
-    while (i < n) {
-        print(arr[i]);
-        i = i + 1;
+    for (i = 0; i < n; i = i + 1;) {
+        print(abas[i]);
     }
 }

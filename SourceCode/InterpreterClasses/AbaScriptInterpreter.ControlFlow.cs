@@ -48,10 +48,9 @@ public partial class AbaScriptInterpreter
             {
                 break;
             }
-            catch (ContinueException)
-            {
-            }
+            catch (ContinueException) { }
         }
+
         RestoreScopeExcludingNewVariables(oldVariables);
         return null;
     }
@@ -96,6 +95,7 @@ public partial class AbaScriptInterpreter
                 {
                     Visit(context.assignment(1));
                 }
+
                 continue;
             }
 
@@ -111,6 +111,7 @@ public partial class AbaScriptInterpreter
                 }
             }
         }
+
         RestoreScopeExcludingNewVariables(oldVariables);
         return null;
     }

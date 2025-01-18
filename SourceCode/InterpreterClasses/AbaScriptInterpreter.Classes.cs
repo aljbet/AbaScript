@@ -67,7 +67,7 @@ public partial class AbaScriptInterpreter
             var parameterType = Enum.Parse<VariableType>(methodInfo.Parameters[i].type, true);
             _variables[methodInfo.Parameters[i].name] = new Variable(parameterType, arguments[i]);
         }
-        
+
         try
         {
             Visit(methodInfo.Body);

@@ -9,17 +9,16 @@ namespace AbaScript.Services;
 
 public class InterpreterService : ICodeRunnable
 {
-
     private AbaScriptInterpreter _interpreter = new();
     private AbaScriptLexerAndParserErrorListener _errorListener = new();
     private AbaScriptMainChecker _mainChecker = new();
     private readonly ICanReadException _exceptionReader = new InterpreterExceptionReader();
-    
+
     public object? RunCode(string input)
     {
         SetUpService();
         var tree = SetUpParseTree(input);
-        
+
         if (_errorListener.HasErrors)
         {
             Console.WriteLine("Errors detected. Stopping execution.");

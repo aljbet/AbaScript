@@ -1,6 +1,6 @@
 ﻿using AbaScript.AntlrClasses.Models;
 
-namespace AbaScript.AntlrClasses.Helpers;
+namespace AbaScript.Helpers;
 
 public static class VariableHelper
 {
