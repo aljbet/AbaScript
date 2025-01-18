@@ -70,7 +70,7 @@ printInstruction: PRINT;
 haltInstruction: HALT;
 
 // A value can be a number or a string, used in PUSH instructions.
-value: NUMBER | STRING;
+value: NUMBER;
 
 // A label reference is an identifier used in jump instructions.
 labelRef: ID;

@@ -24,7 +24,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Services\" />
+      <ProjectReference Include="..\SourceCode\SourceCode.csproj" />
     </ItemGroup>
 
 </Project>
