@@ -40,7 +40,7 @@ public partial class AbaScriptInterpreter
 
     private object Add(object left, object right)
     {
-        if (left is int leftInt && right is int rightInt)
+        if (left is long leftInt && right is long rightInt)
             return leftInt + rightInt;
         if (left is string leftStr && right is string rightStr)
             return leftStr + rightStr;
@@ -50,7 +50,7 @@ public partial class AbaScriptInterpreter
 
     private object Subtract(object left, object right)
     {
-        if (left is int leftInt && right is int rightInt)
+        if (left is long leftInt && right is long rightInt)
             return leftInt - rightInt;
 
         throw new InvalidOperationException($"Несовместимые типы для операции '-': {left}, {right}");
@@ -58,7 +58,7 @@ public partial class AbaScriptInterpreter
 
     private object Multiply(object left, object right)
     {
-        if (left is int leftInt && right is int rightInt)
+        if (left is long leftInt && right is long rightInt)
             return leftInt * rightInt;
 
         throw new InvalidOperationException($"Несовместимые типы для операции '*': {left}, {right}");
@@ -66,7 +66,7 @@ public partial class AbaScriptInterpreter
 
     private object Divide(object left, object right)
     {
-        if (left is int leftInt && right is int rightInt)
+        if (left is long leftInt && right is long rightInt)
         {
             if (rightInt == 0)
                 throw new DivideByZeroException("Деление на ноль невозможно.");
@@ -78,7 +78,7 @@ public partial class AbaScriptInterpreter
 
     private object Modulus(object left, object right)
     {
-        if (left is int leftInt && right is int rightInt)
+        if (left is long leftInt && right is long rightInt)
         {
             if (rightInt == 0)
                 throw new DivideByZeroException("Деление на ноль невозможно.");
@@ -91,7 +91,7 @@ public partial class AbaScriptInterpreter
     public override object VisitUnaryMinus(AbaScriptParser.UnaryMinusContext context)
     {
         var value = Visit(context.factor());
-        if (value is int intValue)
+        if (value is long intValue)
             return -intValue;
 
         throw new InvalidOperationException($"Несовместимый тип для унарного минуса: {value}");
@@ -130,7 +130,7 @@ public partial class AbaScriptInterpreter
 
     public override object VisitNumber(AbaScriptParser.NumberContext context)
     {
-        if (int.TryParse(context.GetText(), out var number))
+        if (long.TryParse(context.GetText(), out var number))
             return number;
         throw new InvalidOperationException($"Невозможно преобразовать в число: {context.GetText()}");
     }
@@ -173,10 +173,10 @@ public partial class AbaScriptInterpreter
         {
             "==" => Equals(left, right),
             "!=" => !Equals(left, right),
-            "<" => (int)left < (int)right,
-            "<=" => (int)left <= (int)right,
-            ">" => (int)left > (int)right,
-            ">=" => (int)left >= (int)right,
+            "<" => (long)left < (long)right,
+            "<=" => (long)left <= (long)right,
+            ">" => (long)left > (long)right,
+            ">=" => (long)left >= (long)right,
             _ => throw new InvalidOperationException("Unsupported comparison operation")
         };
     }

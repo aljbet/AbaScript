@@ -50,7 +50,7 @@ public partial class AbaScriptInterpreter : AbaScriptBaseVisitor<object>
             switch (enumType)
             {
                 case VariableType.Int:
-                    return value is int;
+                    return value is long;
                 case VariableType.String:
                     return value is string;
                 case VariableType.Array:
@@ -67,7 +67,7 @@ public partial class AbaScriptInterpreter : AbaScriptBaseVisitor<object>
 
     private object TryParseNumber(string input)
     {
-        if (int.TryParse(input, out var number)) return number;
+        if (long.TryParse(input, out var number)) return number;
 
         return input; // возврат как строку, если не удалось привести к int
     }

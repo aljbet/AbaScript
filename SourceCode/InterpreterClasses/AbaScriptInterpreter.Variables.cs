@@ -13,7 +13,7 @@ public partial class AbaScriptInterpreter
 
         if (context.NUMBER() != null)
         {
-            var size = int.Parse(context.NUMBER().GetText());
+            var size = long.Parse(context.NUMBER().GetText());
             value = new object[size];
         }
         else if (context.expr() != null)
@@ -43,7 +43,7 @@ public partial class AbaScriptInterpreter
         var variableName = context.ID().GetText();
         if (context.expr() != null)
         {
-            var index = (int)Visit(context.expr());
+            var index = (long)Visit(context.expr());
             if (!_variables.TryGetValue(variableName, out var variable) || !(variable.Value is object[] array))
                 throw new InvalidOperationException(
                     $"Переменная '{variableName}' не объявлена или не является массивом.");
@@ -86,7 +86,7 @@ public partial class AbaScriptInterpreter
             if (expressions.Length == 2)
             {
                 // array[index] = value;
-                var index = (int)Visit(expressions[0]);
+                var index = (long)Visit(expressions[0]);
                 if (!_variables.TryGetValue(varName, out var variable) || !(variable.Value is object[] array))
                     throw new InvalidOperationException($"Переменная '{varName}' не является массивом.");
 
