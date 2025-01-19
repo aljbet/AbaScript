@@ -1,14 +1,15 @@
-﻿using CompileLanguage.Exceptions;
+﻿using CompileLanguage.BaseAntlrClasses;
+using CompileLanguage.Exceptions;
 
 namespace CompileLanguage.InterpreterClasses;
 
 public partial class CompiledAbaScriptInterpreter
 {
-    public override object? VisitAddInstruction(CompiledAbaScriptParser.AddInstructionContext ctx) => PerformBinaryOperation((a, b) => a + b);
-    public override object? VisitSubInstruction(CompiledAbaScriptParser.SubInstructionContext ctx) => PerformBinaryOperation((a, b) => a - b);
-    public override object? VisitMulInstruction(CompiledAbaScriptParser.MulInstructionContext ctx) => PerformBinaryOperation((a, b) => a * b);
-    public override object? VisitDivInstruction(CompiledAbaScriptParser.DivInstructionContext ctx) => PerformBinaryOperation((a, b) => a / b);
-    public override object? VisitModInstruction(CompiledAbaScriptParser.ModInstructionContext ctx) => PerformBinaryOperation((a, b) => a % b);
+    public override object? VisitAddInstruction(CompiledAbaScriptParser.AddInstructionContext context) => PerformBinaryOperation((a, b) => a + b);
+    public override object? VisitSubInstruction(CompiledAbaScriptParser.SubInstructionContext context) => PerformBinaryOperation((a, b) => a - b);
+    public override object? VisitMulInstruction(CompiledAbaScriptParser.MulInstructionContext context) => PerformBinaryOperation((a, b) => a * b);
+    public override object? VisitDivInstruction(CompiledAbaScriptParser.DivInstructionContext context) => PerformBinaryOperation((a, b) => a / b);
+    public override object? VisitModInstruction(CompiledAbaScriptParser.ModInstructionContext context) => PerformBinaryOperation((a, b) => a % b);
 
 
     private object? PerformBinaryOperation(Func<int, int, int> operation)

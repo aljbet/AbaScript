@@ -20,11 +20,11 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Content Include="CompiledAbaScript.g4" />
+      <ProjectReference Include="..\SourceCode\SourceCode.csproj" />
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\SourceCode\SourceCode.csproj" />
+      <Content Include="BaseAntlrClasses\CompiledAbaScript.g4" />
     </ItemGroup>
 
 

@@ -75,7 +75,7 @@ functionDef
 
 // Параметры функции
 typedParam
-    : type ID
+    : type ID ('[' ']')?
     ;
 
 // Вызов функции
@@ -194,15 +194,12 @@ NUMBER
 STRING
     : '"' (~["])* '"'
     ;
-
 NOT
     : '!'
     ;
-
 WS
     : [ \t\r\n]+ -> skip
     ;
-
 COMMENT
     : '#' ~[\r\n]* -> skip
     ;

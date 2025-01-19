@@ -17,7 +17,7 @@ instruction:
     | divInstruction
     | modInstruction
     | jmpInstruction
-    | jmpIfInstruction
+    | ifThenElseInstruction
     | callInstruction
     | retInstruction
     | printInstruction
@@ -54,8 +54,9 @@ modInstruction: MOD;
 // Represents a JMP instruction, which jumps to a specified label.
 jmpInstruction: JMP labelRef;
 
-// Represents a JMP_IF instruction, which conditionally jumps to a label if the top stack value is non-zero.
-jmpIfInstruction: JMP_IF labelRef;
+// Represents a IF_THEN_ELSE instruction, which jumps to the first label
+// if the top stack value is non-zero and to the second label otherwise.
+ifThenElseInstruction: IF_THEN_ELSE labelRef labelRef;
 
 // Represents a CALL instruction, which calls a function by its identifier.
 callInstruction: CALL ID;
@@ -85,7 +86,7 @@ MUL: 'MUL';
 DIV: 'DIV';
 MOD: 'MOD';
 JMP: 'JMP';
-JMP_IF: 'JMP_IF';
+IF_THEN_ELSE: 'IF_THEN_ELSE';
 CALL: 'CALL';
 RET: 'RET';
 PRINT: 'PRINT';

@@ -1,12 +1,13 @@
-﻿using CompileLanguage.Exceptions;
+﻿using CompileLanguage.BaseAntlrClasses;
+using CompileLanguage.Exceptions;
 
 namespace CompileLanguage.InterpreterClasses;
 
 public partial class CompiledAbaScriptInterpreter
 {
-    public override object? VisitLoadInstruction(CompiledAbaScriptParser.LoadInstructionContext ctx)
+    public override object? VisitLoadInstruction(CompiledAbaScriptParser.LoadInstructionContext context)
     {
-        var varName = ctx.ID().GetText();
+        var varName = context.ID().GetText();
         if (!_variables.ContainsKey(varName))
         {
             throw new RuntimeException("Variable not found: " + varName);
@@ -15,9 +16,9 @@ public partial class CompiledAbaScriptInterpreter
         return null;
     }
 
-    public override object? VisitStoreInstruction(CompiledAbaScriptParser.StoreInstructionContext ctx)
+    public override object? VisitStoreInstruction(CompiledAbaScriptParser.StoreInstructionContext context)
     {
-        var varName = ctx.ID().GetText();
+        var varName = context.ID().GetText();
         if (_stack.Count == 0)
         {
             throw new RuntimeException("Stack underflow during STORE");

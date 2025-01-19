@@ -1,16 +1,17 @@
-﻿using CompileLanguage.Exceptions;
+﻿using CompileLanguage.BaseAntlrClasses;
+using CompileLanguage.Exceptions;
 
 namespace CompileLanguage.InterpreterClasses;
 
 public partial class CompiledAbaScriptInterpreter
 {
-    public override object? VisitPushInstruction(CompiledAbaScriptParser.PushInstructionContext ctx)
+    public override object? VisitPushInstruction(CompiledAbaScriptParser.PushInstructionContext context)
     {
-        _stack.Push(int.Parse(ctx.value().NUMBER().GetText()));
+        _stack.Push(int.Parse(context.value().NUMBER().GetText()));
         return null;
     }
 
-    public override object? VisitPopInstruction(CompiledAbaScriptParser.PopInstructionContext ctx)
+    public override object? VisitPopInstruction(CompiledAbaScriptParser.PopInstructionContext context)
     {
         if (_stack.Count == 0)
         {

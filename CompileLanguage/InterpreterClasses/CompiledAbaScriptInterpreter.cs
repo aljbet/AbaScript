@@ -1,5 +1,5 @@
 ﻿using Antlr4.Runtime;
-using Antlr4.Runtime.Tree;
+using CompileLanguage.BaseAntlrClasses;
 
 namespace CompileLanguage.InterpreterClasses;
 
