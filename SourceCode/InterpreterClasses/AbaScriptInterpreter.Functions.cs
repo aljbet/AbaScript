@@ -11,6 +11,10 @@ public partial class AbaScriptInterpreter
         var returnType = context.returnType().GetText();
         var parameters = context.typedParam().Select(p => (p.type().GetText(), p.ID().GetText())).ToList();
 
+        if (_functions.ContainsKey(funcName))
+        {
+            throw new InvalidOperationException($"Function '{funcName}' already defined.");
+        }
         _functions[funcName] = (parameters, returnType, context.block());
         _logger.Log(
             $"Функция {funcName} определена с параметрами: {string.Join(", ", parameters.Select(p => $"{p.Item1} {p.Item2}"))}");
