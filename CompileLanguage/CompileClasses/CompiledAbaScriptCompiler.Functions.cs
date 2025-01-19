@@ -10,7 +10,7 @@ public partial class CompiledAbaScriptCompiler
         // надо добавить в словарь functionLabels но я хз какой тут i
         for (int i = context.typedParam().Length - 1; i >= 0; i--)
         {
-            _stringBuilder.Append($"{Keywords.STORE} { context.typedParam(i).ID()}");
+            _stringBuilder.AppendLine($"{Keywords.STORE} { context.typedParam(i).ID()}");
         }
 
         VisitBlock(context.block());
