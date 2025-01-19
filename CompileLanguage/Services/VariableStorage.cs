@@ -23,4 +23,9 @@ public class VariableStorage : IVariableStorage
     {
         _variables[name] = value;
     }
+
+    public void Clear()
+    {
+        _variables.Clear();
+    }
 }

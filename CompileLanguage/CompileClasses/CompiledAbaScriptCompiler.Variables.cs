@@ -16,7 +16,6 @@ public partial class CompiledAbaScriptCompiler
             return null;
         }
 
-
         var expressionResult = 0;
         if (context.expr() != null)
         {

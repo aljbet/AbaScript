@@ -6,8 +6,7 @@ namespace CompileLanguage.CompileClasses;
 
 public partial class CompiledAbaScriptCompiler : AbaScriptBaseVisitor<object?>
 {
-    private StringBuilder _stringBuilder = new();
-    private int labelCounter = 0; // пока не понимаю зачем
+    private readonly StringBuilder _stringBuilder = new();
     private Dictionary<string, int> functionLabels = new();
     private Dictionary<string, int> variableOffsets = new(); // Track variable offsets within functions
     private Stack<int> returnPoints = new(); // запоминает, куда возвращаться после вызова функции.
@@ -15,8 +14,8 @@ public partial class CompiledAbaScriptCompiler : AbaScriptBaseVisitor<object?>
 
     public override object? VisitScript(AbaScriptParser.ScriptContext context)
     {
-        _stringBuilder = new StringBuilder();
-
+        SetUpService();
+        
         foreach (var classDef in context.classDef())
         {
             Visit(classDef);
@@ -46,5 +45,11 @@ public partial class CompiledAbaScriptCompiler : AbaScriptBaseVisitor<object?>
     public string GetActualCompiledCode()
     {
         return _stringBuilder.ToString();
+    }
+
+    private void SetUpService()
+    {
+        _stringBuilder.Clear();
+        _variableStorage.Clear();
     }
 }
