@@ -1,5 +1,6 @@
 ﻿using Antlr4.Runtime;
 using CompileLanguage.BaseAntlrClasses;
+using CompileLanguage.Exceptions;
 
 namespace CompileLanguage.InterpreterClasses;
 
@@ -18,7 +19,13 @@ public partial class CompiledAbaScriptInterpreter : CompiledAbaScriptBaseVisitor
         for (var i = 0; i < _statements.Count; i++)
         {
             var stmt = _statements[i];
-            if (stmt.label() != null) _labels[stmt.label().ID().GetText()] = i;
+            if (stmt.label() != null)
+            {
+                var label = stmt.label().ID().GetText();
+                if (_labels.ContainsKey(label))
+                    throw new RuntimeException($"Label {label} already defined.");
+                _labels[stmt.label().ID().GetText()] = i;
+            }
         }
 
         ExecuteStatements();
@@ -37,7 +44,7 @@ public partial class CompiledAbaScriptInterpreter : CompiledAbaScriptBaseVisitor
 
             if (_jumpDestination != -1)
             {
-                i = _jumpDestination -1;
+                i = _jumpDestination - 1;
                 _jumpDestination = -1;
             }
         }
