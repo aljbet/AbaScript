@@ -5,10 +5,11 @@ namespace CompileLanguage.CompileClasses;
 
 public partial class CompiledAbaScriptCompiler : AbaScriptBaseVisitor<object?>
 {
-    private StringBuilder _stringBuilder = new StringBuilder();
-    private int labelCounter = 0;
-    private Dictionary<string, int> functionLabels = new Dictionary<string, int>();
-    private Dictionary<string, int> variableOffsets = new Dictionary<string, int>(); // Track variable offsets within functions
+    private StringBuilder _stringBuilder = new();
+    private int labelCounter = 0; // пока не понимаю зачем
+    private Dictionary<string, int> functionLabels = new();
+    private Dictionary<string, int> variableOffsets = new(); // Track variable offsets within functions
+    private Stack<int> returnPoints = new(); // запоминает, куда возвращаться после вызова функции.
 
     public override object? VisitScript(AbaScriptParser.ScriptContext context)
     {
@@ -21,11 +22,6 @@ public partial class CompiledAbaScriptCompiler : AbaScriptBaseVisitor<object?>
         foreach (var classDef in context.classDef())
         {
             Visit(classDef);
-        }
-
-        foreach (var statement in context.statement())
-        {
-            Visit(statement);
         }
 
         return _stringBuilder.ToString();
