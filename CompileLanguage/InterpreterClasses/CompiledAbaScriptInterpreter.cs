@@ -4,12 +4,66 @@ using CompileLanguage.Exceptions;
 
 namespace CompileLanguage.InterpreterClasses;
 
+// где храним переменную
+public enum Storage
+{
+    Heap,
+    Stack
+}
+
+public struct Variable
+{
+    public Variable(string type, int address, Storage storage, string name)
+    {
+        Type = type;
+        Address = address;
+        Storage = storage;
+        Name = name;
+    }
+    
+    public string Type;
+    public int Address;
+    public Storage Storage;
+    public string Name;
+}
+
+// этот контекст можно будет заранее обработать
+public struct ClassInfo
+{
+    public Variable[] Fields;
+    
+    public ClassInfo(Variable[] fields)
+    {
+        Fields = fields;
+    }
+}
+
+public struct SimpleTypes
+{
+    public static String boolType = "bool";
+    public static String intType = "int";
+    public static String stringType = "string";
+
+    public static bool IsSimple(String t)
+    {
+        return t == boolType || t == intType || t == stringType;
+    }
+}
+
 public partial class CompiledAbaScriptInterpreter : CompiledAbaScriptBaseVisitor<object?>
 {
     private readonly Dictionary<string, int> _labels = new();
     private readonly Stack<int> _stack = new();
-    private readonly Dictionary<string, int> _variables = new();
+    private readonly Dictionary<string, Variable> _variables = new(); // храним информацию о переменных в стеке (инстансы классов это указатели на кучу)
     private IList<CompiledAbaScriptParser.StatementContext> _statements;
+    private Dictionary<int, int> _heapAddresses = new(); // адресное пространство кучи
+    Dictionary<int, int> _stackAddresses = new();        // адресное пространство стека
+    Dictionary<int, int> _linkCounter = new();           // счётчик ссылок
+    private Stack<int> _scopeStack = new();
+    private int _stackTop = 0;
+    private int _heapTop = 0;
+    
+    private Dictionary<String, ClassInfo> _classInfos = new();
 
     public void Interpret(string input)
     {
