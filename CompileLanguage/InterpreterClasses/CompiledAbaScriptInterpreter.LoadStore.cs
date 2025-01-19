@@ -8,11 +8,12 @@ public partial class CompiledAbaScriptInterpreter
     public override object? VisitLoadInstruction(CompiledAbaScriptParser.LoadInstructionContext context)
     {
         var varName = context.ID().GetText();
-        if (!_variables.ContainsKey(varName))
+        if (!_variables.TryGetValue(varName, out var value))
         {
             throw new RuntimeException("Variable not found: " + varName);
         }
-        _stack.Push(_variables[varName]);
+
+        _stack.Push(value);
         return null;
     }
 
@@ -23,6 +24,7 @@ public partial class CompiledAbaScriptInterpreter
         {
             throw new RuntimeException("Stack underflow during STORE");
         }
+
         _variables[varName] = _stack.Pop();
         return null;
     }

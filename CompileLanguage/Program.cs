@@ -1,7 +1,4 @@
-﻿using Antlr4.Runtime;
-using Antlr4.Runtime.Tree;
-using CompileLanguage;
-using CompileLanguage.InterpreterClasses;
+﻿using CompileLanguage.InterpreterClasses;
 
 const string program = @"
 PUSH 10        # Push 10 onto the stack

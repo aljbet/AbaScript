@@ -35,11 +35,6 @@ public partial class CompiledAbaScriptInterpreter : CompiledAbaScriptBaseVisitor
     {
         for (var i = 0; i < _statements.Count; i++)
         {
-            if (_statements.Count == 0)
-            {
-                break;
-            }
-
             Visit(_statements[i]);
 
             if (_jumpDestination != -1)

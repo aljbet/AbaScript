@@ -17,6 +17,7 @@ public partial class CompiledAbaScriptInterpreter
         {
             throw new RuntimeException("Stack underflow during POP");
         }
+
         _stack.Pop();
         return null;
     }

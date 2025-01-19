@@ -6,7 +6,9 @@ namespace CompileLanguage.InterpreterClasses;
 public partial class CompiledAbaScriptInterpreter
 {
     private int _jumpDestination = -1;
-    public override object? VisitJmpInstruction(CompiledAbaScriptParser.JmpInstructionContext context) => JumpToLabel(context.labelRef().ID().GetText());
+
+    public override object? VisitJmpInstruction(CompiledAbaScriptParser.JmpInstructionContext context) =>
+        JumpToLabel(context.labelRef().ID().GetText());
 
     public override object? VisitIfThenElseInstruction(CompiledAbaScriptParser.IfThenElseInstructionContext context)
     {
@@ -24,6 +26,7 @@ public partial class CompiledAbaScriptInterpreter
         {
             JumpToLabel(context.labelRef(1).ID().GetText());
         }
+
         return null;
     }
 
@@ -33,6 +36,7 @@ public partial class CompiledAbaScriptInterpreter
         {
             throw new RuntimeException("Label not found: " + labelName);
         }
+
         _jumpDestination = _labels[labelName];
         return null;
     }
@@ -44,6 +48,7 @@ public partial class CompiledAbaScriptInterpreter
         {
             throw new RuntimeException("Stack underflow during PRINT");
         }
+
         Console.WriteLine(_stack.Peek());
         return null;
     }
