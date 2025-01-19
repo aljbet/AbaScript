@@ -74,8 +74,9 @@ public partial class AbaScriptCompiler
             if (value.TypeOf.Kind != variable.Ty.Kind)
                 throw new InvalidOperationException($"Переменная {varName} должна быть типа {variable.Ty.Kind}.");
 
+            var zeroElemPtr = _builder.BuildLoad2(LLVMTypeRef.CreatePointer(_intType, 0), variable.Alloca);
             LLVMValueRef vectorIndexPtr =
-                _builder.BuildGEP2(variable.Ty, variable.Alloca, new LLVMValueRef[] { index });
+                _builder.BuildGEP2(variable.Ty, zeroElemPtr, new LLVMValueRef[] { index });
             _builder.BuildStore(value, vectorIndexPtr);
         }
         else
@@ -99,7 +100,7 @@ public partial class AbaScriptCompiler
     public override object VisitVariableOrArrayAccess(AbaScriptParser.VariableOrArrayAccessContext context)
     {
         string variableName = context.ID().GetText();
-        if (context.expr() != null) // array
+        if (context.expr() != null) // array element
         {
             // TODO: обрабатывать границы массива
             Visit(context.expr());
@@ -109,11 +110,12 @@ public partial class AbaScriptCompiler
                 throw new InvalidOperationException(
                     $"Переменная '{variableName}' не объявлена или не является массивом.");
 
+            var zeroElemPtr = _builder.BuildLoad2(LLVMTypeRef.CreatePointer(_intType, 0), variable.Alloca);
             LLVMValueRef vectorIndexPtr =
-                _builder.BuildGEP2(variable.Ty, variable.Alloca, new LLVMValueRef[] { index });
+                _builder.BuildGEP2(variable.Ty, zeroElemPtr, new LLVMValueRef[] { index });
             _valueStack.Push(_builder.BuildLoad2(variable.Ty, vectorIndexPtr));
         }
-        else // int
+        else // int or array
         {
             if (_scopeManager.TryGetValue(variableName, out var alloca))
             {
@@ -196,7 +198,7 @@ public partial class AbaScriptCompiler
     private LLVMValueRef GetOrCreatePrintFunc()
     {
         var printName = "$print";
-        var printFnTy = LLVMTypeRef.CreateFunction(_context.Int64Type, new[] { _intType });
+        var printFnTy = LLVMTypeRef.CreateFunction(_context.Int32Type, new[] { _intType });
         var printFn = _module.GetNamedFunction(printName);
         if (printFn != null)
         {
@@ -250,7 +252,7 @@ public partial class AbaScriptCompiler
 
         _builder.BuildFree(originalBuffer);
 
-        _builder.BuildRet(LLVMValueRef.CreateConstInt(_context.Int64Type, 0));
+        _builder.BuildRet(LLVMValueRef.CreateConstInt(_context.Int32Type, 0));
 
         // Validate the generated code, checking for consistency.
         printFn.VerifyFunction(LLVMVerifierFailureAction.LLVMAbortProcessAction);

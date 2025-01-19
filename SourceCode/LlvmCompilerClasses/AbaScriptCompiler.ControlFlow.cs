@@ -34,6 +34,12 @@ public partial class AbaScriptCompiler
 
     public override object VisitForStatement(AbaScriptParser.ForStatementContext context)
     {
+        var currFunc = _builder.InsertBlock.Parent;
+        var loopCondBB = _context.AppendBasicBlock(currFunc, "forCond");
+        var loopBodyBB = _context.AppendBasicBlock(currFunc, "forBody");
+        var loopIncBB = _context.AppendBasicBlock(currFunc, "forInc");
+        var loopAfterBB = _context.AppendBasicBlock(currFunc, "afterFor");
+        
         if (context.variableDeclaration() != null)
         {
             Visit(context.variableDeclaration());
@@ -42,14 +48,18 @@ public partial class AbaScriptCompiler
         {
             Visit(context.assignment(0));
         }
+        _builder.BuildBr(loopCondBB);
 
-        var preheaderBB = _builder.InsertBlock;
-        var func = preheaderBB.Parent;
-        var loopBB = LLVMBasicBlockRef.AppendInContext(_context, func, "loop");
-        _builder.BuildBr(loopBB);
-        _builder.PositionAtEnd(loopBB);
+        _builder.PositionAtEnd(loopCondBB);
+        Visit(context.logicalExpr());
+        var logExprValue = _valueStack.Pop();
+        _builder.BuildCondBr(logExprValue, loopBodyBB, loopAfterBB);
 
+        _builder.PositionAtEnd(loopBodyBB);
         Visit(context.block());
+        _builder.BuildBr(loopIncBB);
+        
+        _builder.PositionAtEnd(loopIncBB);
         if (context.variableDeclaration() != null)
         {
             Visit(context.assignment(0));
@@ -58,16 +68,10 @@ public partial class AbaScriptCompiler
         {
             Visit(context.assignment(1));
         }
+        _builder.BuildBr(loopCondBB);
 
-        Visit(context.logicalExpr());
-        var logExprValue = _valueStack.Pop();
-
-        var afterBB = LLVMBasicBlockRef.AppendInContext(_context, func, "afterloop");
-
-        _builder.BuildCondBr(logExprValue, loopBB, afterBB);
-        _builder.PositionAtEnd(afterBB);
-
-        _valueStack.Push(LLVMValueRef.CreateConstInt(_context.GetIntType(1), 0));
+        //_valueStack.Push(LLVMValueRef.CreateConstInt(_context.GetIntType(1), 0));
+        _builder.PositionAtEnd(loopAfterBB);
 
         return context;
     }
