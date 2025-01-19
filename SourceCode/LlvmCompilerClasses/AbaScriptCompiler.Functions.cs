@@ -17,8 +17,8 @@ public partial class AbaScriptCompiler
         {
             throw new InvalidOperationException($"Функция '{funcName}' уже определена.");
         }
-
-        var parameters = context.typedParam().Select(p => (p.type().GetText(), p.ID().GetText())).ToList();
+        
+        var parameters = context.typedParam().Select(p => (p.type().GetText(), p.ID().GetText(), p.GetText())).ToList();
         for (var i = 0; i < argumentCount; ++i)
         {
             arguments[i] = TypeMatch(parameters[i].Item1);
@@ -46,8 +46,14 @@ public partial class AbaScriptCompiler
 
             var alloca = _builder.BuildAlloca(argumentTy);
             _builder.BuildStore(param, alloca);
-
-            _scopeManager[argumentName] = new AllocaInfo(alloca, argumentTy);
+            if (parameters[i].Item3.Contains('['))
+            {
+                _scopeManager[argumentName] = new ArrayAllocaInfo(alloca, argumentTy, 0);
+            }
+            else
+            {
+                _scopeManager[argumentName] = new AllocaInfo(alloca, argumentTy);
+            }
         }
 
         try
@@ -113,7 +119,7 @@ public partial class AbaScriptCompiler
             var actualType = arguments[i].TypeOf.Kind;
             if (expectedType != actualType)
                 throw new InvalidOperationException(
-                    $"Аргумент {i} функции {funcName} должен быть типа {expectedType}.");
+                    $"Аргумент {i} функции {funcName} должен быть типа {expectedType} (получен {actualType}).");
         }
 
         var funcType = _funcTypes[funcName];
