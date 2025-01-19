@@ -11,10 +11,10 @@ public partial class CompiledAbaScriptCompiler
         switch (context.GetChild(1).GetText())
         {
             case "+":
-                _stringBuilder.Append(Keywords.ADD);
+                _stringBuilder.AppendLine(Keywords.ADD);
                 break;
             case "-":
-                _stringBuilder.Append(Keywords.SUB);
+                _stringBuilder.AppendLine(Keywords.SUB);
                 break;
             default:
                 throw new InvalidOperationException("Unsupported operation");
@@ -29,17 +29,24 @@ public partial class CompiledAbaScriptCompiler
         switch (context.GetChild(1).GetText())
         {
             case "*":
-                _stringBuilder.Append(Keywords.MUL);
+                _stringBuilder.AppendLine(Keywords.MUL);
                 break;
             case "/":
-                _stringBuilder.Append(Keywords.DIV);
+                _stringBuilder.AppendLine(Keywords.DIV);
                 break;
             case "%":
-                _stringBuilder.Append(Keywords.MOD);
+                _stringBuilder.AppendLine(Keywords.MOD);
                 break;
             default:
                 throw new InvalidOperationException("Unsupported operation");
         }
         return context;
+    }
+    
+    public override object VisitOutputStatement(AbaScriptParser.OutputStatementContext context)
+    {
+        _stringBuilder.AppendLine($"PUSH {Visit(context.expr())}");
+        _stringBuilder.AppendLine("PRINT");
+        return null;
     }
 }

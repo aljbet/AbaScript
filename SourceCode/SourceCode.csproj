@@ -22,5 +22,9 @@
     <ItemGroup>
         <Folder Include="logs\"/>
     </ItemGroup>
+    
+    <ItemGroup>
+        <Content Include="AntlrClasses\AbaScript.g4"/>
+    </ItemGroup>
 
 </Project>
