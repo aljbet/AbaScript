@@ -1,6 +1,7 @@
 ﻿using System.Text;
 using AbaScript.AntlrClasses;
 using AbaScript.AntlrClasses.Models;
+using CompileLanguage.Exceptions;
 using CompileLanguage.InterpreterClasses;
 using CompileLanguage.Services;
 
@@ -12,14 +13,17 @@ public partial class CompiledAbaScriptCompiler : AbaScriptBaseVisitor<object?>
     private readonly IVariableStorage _variableStorage = new VariableStorage();
     private Dictionary<string, ClassInfo> _classContexts = new();
     private readonly Dictionary<string, ClassInstance> _classInstances = new();
+    private int _ifBlocksCount = 0;
+    private int _forBlocksCount = 0;
+
     private readonly Dictionary<string, (List<(string type, string name)> Parameters, string ReturnType,
         AbaScriptParser.BlockContext Body)> _functions
         = new();
 
-    public override object? VisitScript(AbaScriptParser.ScriptContext context)
+    public override object VisitScript(AbaScriptParser.ScriptContext context)
     {
         SetUpService();
-        
+
         foreach (var classDef in context.classDef())
         {
             Visit(classDef);
@@ -29,21 +33,22 @@ public partial class CompiledAbaScriptCompiler : AbaScriptBaseVisitor<object?>
         {
             Visit(funcDef);
         }
-        
+
         var mainFunction = context.functionDef().FirstOrDefault(func => func.ID().GetText() == "main");
-        if (mainFunction != null)
+        if (mainFunction == null)
         {
-            VisitMainFunction(mainFunction);
+            throw new RuntimeException("No main function.");
         }
 
+        VisitMainFunction(mainFunction);
 
         return _stringBuilder.ToString();
     }
 
-    private object? VisitMainFunction(AbaScriptParser.FunctionDefContext context)
+    private object VisitMainFunction(AbaScriptParser.FunctionDefContext context)
     {
         Visit(context.block());
-        return null;
+        return context;
     }
 
     public string GetActualCompiledCode()

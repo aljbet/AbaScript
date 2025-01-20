@@ -4,7 +4,7 @@ namespace CompileLanguage.CompileClasses;
 
 public partial class CompiledAbaScriptCompiler
 {
-    public override object? VisitAddSub(AbaScriptParser.AddSubContext context)
+    public override object VisitAddSub(AbaScriptParser.AddSubContext context)
     {
         Visit(context.expr());
         Visit(context.term());
@@ -19,10 +19,11 @@ public partial class CompiledAbaScriptCompiler
             default:
                 throw new InvalidOperationException("Unsupported operation");
         }
+
         return context;
     }
 
-    public override object? VisitMulDivMod(AbaScriptParser.MulDivModContext context)
+    public override object VisitMulDivMod(AbaScriptParser.MulDivModContext context)
     {
         Visit(context.term());
         Visit(context.factor());
@@ -40,14 +41,15 @@ public partial class CompiledAbaScriptCompiler
             default:
                 throw new InvalidOperationException("Unsupported operation");
         }
+
         return context;
     }
-    
+
     public override object VisitOutputStatement(AbaScriptParser.OutputStatementContext context)
     {
         Visit(context.expr());
         _stringBuilder.AppendLine("PRINT");
 
-        return null;
+        return context;
     }
 }
