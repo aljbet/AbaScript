@@ -28,27 +28,19 @@ public partial class CompiledAbaScriptCompiler : AbaScriptBaseVisitor<object?>
         {
             Visit(classDef);
         }
+        
+        var mainFunction = context.functionDef().FirstOrDefault(func => func.ID().GetText() == "main");
+        if (mainFunction == null)
+        {
+            throw new RuntimeException("No main function.");
+        }
 
         foreach (var funcDef in context.functionDef())
         {
             Visit(funcDef);
         }
 
-        // var mainFunction = context.functionDef().FirstOrDefault(func => func.ID().GetText() == "main");
-        // if (mainFunction == null)
-        // {
-        //     throw new RuntimeException("No main function.");
-        // }
-        //
-        // VisitMainFunction(mainFunction);
-
         return _stringBuilder.ToString();
-    }
-
-    private object VisitMainFunction(AbaScriptParser.FunctionDefContext context)
-    {
-        Visit(context.block());
-        return context;
     }
 
     public string GetActualCompiledCode()
