@@ -5,6 +5,11 @@ INIT x int
 INIT y int
 INIT z testClass1
 
+PUSH 1          # Push 1 onto the stack
+STORE z.test1
+PUSH 2          # Push 2 onto the stack
+STORE z.test3
+
 PUSH 10         # Push 10 onto the stack
 STORE x         # Store 10 in variable x
 
@@ -24,11 +29,23 @@ ENTER_SCOPE
 INIT w testClass2
 PUSH 7          # Push 7 onto the stack
 STORE w.test1
-PUSH 8
+PUSH 8          # Push 8 onto the stack
 STORE w.test2
 
 LOAD w
 STORE z.test2
+
+INIT z testClass1
+PUSH 4          # Push 4 onto the stack
+STORE z.test1
+PUSH 5          # Push 5 onto the stack
+STORE z.test3
+
+LOAD z.test1    # Print the result (should be 4)
+PRINT
+LOAD z.test3    # Print the result (should be 5)
+PRINT
+
 JMP end_if      # Jump to 'end_if'
 
 false_block:          # else block label
@@ -38,6 +55,11 @@ STORE result    # Store 0 in 'result'
 
 end_if:         # end of if-else block
 EXIT_SCOPE
+
+LOAD z.test1   # Print the result (should be 1)
+PRINT
+LOAD z.test3
+PRINT          # Print the result (should be 2)
 
 LOAD z.test2.test1
 PRINT          # Print the result (should be 7)

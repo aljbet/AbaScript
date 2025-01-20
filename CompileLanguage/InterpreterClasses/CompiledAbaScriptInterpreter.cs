@@ -66,7 +66,7 @@ public partial class CompiledAbaScriptInterpreter : CompiledAbaScriptBaseVisitor
 {
     private readonly Dictionary<string, int> _labels = new();
     private readonly Stack<int> _stack = new();
-    private readonly Dictionary<string, Variable> _variables = new(); // храним информацию о переменных в стеке (инстансы классов это указатели на кучу)
+    private readonly Dictionary<string, Stack<Variable>> _variables = new(); // храним информацию о переменных в стеке (инстансы классов это указатели на кучу)
     private IList<CompiledAbaScriptParser.StatementContext> _statements;
     private Dictionary<int, int> _heapAddresses = new(); // адресное пространство кучи
     Dictionary<int, int> _stackAddresses = new();        // адресное пространство стека

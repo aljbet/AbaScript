@@ -15,14 +15,14 @@ public partial class CompiledAbaScriptInterpreter
             {
                 throw new RuntimeException("Variable not found: " + varName);
             }
-            _stack.Push(_stackAddresses[value.Address]);
+            _stack.Push(_stackAddresses[value.Peek().Address]);
             return null;
         }
         
         // ищем нужное поле в куче
         List<string> fields = varName.Split('.').ToList();
-        int address = _stackAddresses[_variables[fields[0]].Address];
-        string lastClassName = _variables[fields[0]].Type;
+        int address = _stackAddresses[_variables[fields[0]].Peek().Address];
+        string lastClassName = _variables[fields[0]].Peek().Type;
         for (int i = 1; i < fields.Count; i++)
         {
             for (int j = address; j < address + _classInfos[lastClassName].Fields.Length; j++)
@@ -58,13 +58,21 @@ public partial class CompiledAbaScriptInterpreter
         // просто добавляем переменную в стек
         if (variableStorage == Storage.Stack)
         {
-            _variables[varName] = new Variable(className, _stackTop, Storage.Stack, varName);
+            if (!_variables.TryGetValue(varName, out var st1))
+            {
+                _variables[varName] = new Stack<Variable>();
+            }
+            _variables[varName].Push(new Variable(className, _stackTop, Storage.Stack, varName));
             _stackAddresses[_stackTop] = 0;
             _stackTop++;
             return null;
         }
         
-        _variables[varName] = new Variable(className, _stackTop, Storage.Heap, varName);
+        if (!_variables.TryGetValue(varName, out var st2))
+        {
+            _variables[varName] = new Stack<Variable>();
+        }
+        _variables[varName].Push(new Variable(className, _stackTop, Storage.Heap, varName));
         _stackAddresses[_stackTop] = InitObject(className, _heapTop);
         _stackTop++;
         return null;
@@ -103,16 +111,16 @@ public partial class CompiledAbaScriptInterpreter
                 throw new RuntimeException("Variable not found: " + varName);
             }
 
-            oldValue = _stackAddresses[value.Address];
+            oldValue = _stackAddresses[value.Peek().Address];
             newValue = _stack.Pop();
-            _stackAddresses[value.Address] = newValue;
-            if (!SimpleTypes.IsSimple(value.Type))
+            _stackAddresses[value.Peek().Address] = newValue;
+            if (!SimpleTypes.IsSimple(value.Peek().Type))
             {
                 _linkCounter[oldValue]--;
                 _linkCounter[newValue]++;
                 if (_linkCounter[oldValue] == 0)
                 {
-                    DeleteHeapObject(value.Type, oldValue);
+                    DeleteHeapObject(value.Peek().Type, oldValue);
                 }
             }
             
@@ -121,8 +129,8 @@ public partial class CompiledAbaScriptInterpreter
         
         // ищем нужное поле в куче и присваиваем ему значение
         List<string> fields = varName.Split('.').ToList();
-        int address = _stackAddresses[_variables[fields[0]].Address];
-        string lastClassName = _variables[fields[0]].Type;
+        int address = _stackAddresses[_variables[fields[0]].Peek().Address];
+        string lastClassName = _variables[fields[0]].Peek().Type;
         for (int i = 1; i < fields.Count; i++)
         {
             for (int j = address; j < address + _classInfos[lastClassName].Fields.Length; j++)

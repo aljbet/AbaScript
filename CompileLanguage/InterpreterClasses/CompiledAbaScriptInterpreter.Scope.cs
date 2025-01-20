@@ -22,9 +22,9 @@ public partial class CompiledAbaScriptInterpreter
             Variable variable = new Variable();
             foreach (var kv in _variables)
             {
-                if (_stackAddresses[kv.Value.Address] == j)
+                if (_stackAddresses[kv.Value.Peek().Address] == j)
                 {
-                    variable = kv.Value;
+                    variable = kv.Value.Peek();
                 }
             }
 
@@ -35,7 +35,11 @@ public partial class CompiledAbaScriptInterpreter
 
             // в любом случае снимаем всё со стека
             _stackAddresses.Remove(i);
-            _variables.Remove(variable.Name);
+            _variables[variable.Name].Pop();
+            if (_variables[variable.Name].Count == 0)
+            {
+                _variables.Remove(variable.Name);
+            }
         }
         _stackTop = stackPointer;
         return null;
