@@ -31,6 +31,7 @@ public partial class AbaScriptCompiler
         var function = _module.AddFunction(funcName, funcType);
 
         _scopeManager.EnterScope();
+        _scopeManager.CurrentParams = context.typedParam().Select(p => p.ID().GetText()).ToList();
 
         // Create a new basic block to start insertion into.
         var block = function.AppendBasicBlock("entry");
@@ -70,6 +71,7 @@ public partial class AbaScriptCompiler
         }
 
         // Finish off the function.
+        Clear();
         _builder.BuildRet(LLVMValueRef.CreateConstInt(_intType, 0));
         ClearAfterReturn(block);
         foreach (var funcBlock in function.BasicBlocks)
@@ -129,8 +131,23 @@ public partial class AbaScriptCompiler
     public override object VisitReturnStatement(AbaScriptParser.ReturnStatementContext context)
     {
         Visit(context.expr());
+        Clear();
         _valueStack.Push(_builder.BuildRet(_valueStack.Pop()));
 
         return context;
+    }
+
+    public void Clear()
+    {
+        var scope = _scopeManager.CurrentScope;
+        var paramNames = _scopeManager.CurrentParams;
+        foreach (var v in scope)
+        {
+            if (v.Value is ArrayAllocaInfo arrayAlloca && !paramNames.Contains(v.Key))
+            {
+                var array = _builder.BuildLoad2(LLVMTypeRef.CreatePointer(_intType, 0), arrayAlloca.Alloca);
+                _builder.BuildFree(array);
+            }
+        }
     }
 }

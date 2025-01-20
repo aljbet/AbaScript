@@ -9,6 +9,10 @@ public class ScopeManager<T>
         // create global scope
         _scopes.Push(new Dictionary<string, T>());
     }
+    
+    public Dictionary<string, T> CurrentScope => _scopes.Peek();
+
+    public List<string> CurrentParams { get; set; }
 
     public void EnterScope()
     {
