@@ -20,6 +20,7 @@ public class CompilerService : IExecutable
         {
             throw new ArgumentException("Compiled code has to be string");
         }
+        Console.WriteLine(code);
         _interpreter.Interpret(code);
     }
 }

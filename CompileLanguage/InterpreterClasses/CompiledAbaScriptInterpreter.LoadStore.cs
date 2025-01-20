@@ -8,44 +8,48 @@ public partial class CompiledAbaScriptInterpreter
     public override object? VisitLoadInstruction(CompiledAbaScriptParser.LoadInstructionContext context)
     {
         var varName = context.varName().GetText();
-        if (!varName.Contains("."))
+        var isArray = varName.EndsWith("[]");
+        var idx = 0;
+        if (isArray)
         {
-            // просто вытаскиваем значение переменной или адрес объекта
-            if (!_variables.TryGetValue(varName, out var value))
-            {
-                throw new RuntimeException("Variable not found: " + varName);
-            }
-            _stack.Push(_stackAddresses[value.Peek().Address]);
-            return null;
+            idx = _stack.Pop();
         }
-        
+
         // ищем нужное поле в куче
         List<string> fields = varName.Split('.').ToList();
-        int address = _stackAddresses[_variables[fields[0]].Peek().Address];
+        int variableAddress = _variables[fields[0]].Peek().Address + idx;
+        int stackValue = _stackAddresses[variableAddress];
         string lastClassName = _variables[fields[0]].Peek().Type;
         for (int i = 1; i < fields.Count; i++)
         {
-            for (int j = address; j < address + _classInfos[lastClassName].Fields.Count; j++)
+            for (int j = stackValue; j < stackValue + _classInfos[lastClassName].Fields.Count; j++)
             {
-                var fieldNum = j - address;
+                var fieldNum = j - stackValue;
                 if (fields[i] == _classInfos[lastClassName].Fields[fieldNum].Name)
                 {
                     if (SimpleTypes.IsSimple(_classInfos[lastClassName].Fields[fieldNum].Type))
                     {
-                        address = j;
+                        stackValue = j;
                     }
                     else
                     {
-                        address = _heapAddresses[j];
+                        stackValue = _heapAddresses[j];
                     }
-                    
+
                     lastClassName = _classInfos[lastClassName].Fields[fieldNum].Type;
                     break;
                 }
             }
         }
-        
-        _stack.Push(_heapAddresses[address]);
+
+        if (!varName.Contains("."))
+        {
+            _stack.Push(_stackAddresses[variableAddress]);
+        }
+        else
+        {
+            _stack.Push(_heapAddresses[stackValue]);
+        }
         return null;
     }
 
@@ -54,27 +58,25 @@ public partial class CompiledAbaScriptInterpreter
         var varName = context.ID().GetText();
         var className = context.className().GetText();
         StorageType variableStorageType = DetermineStorage(varName, className);
+        var isArray = varName.EndsWith("[]");
+        var size = 1;
+        if (isArray)
+        {
+            size = _stack.Pop();
+        }
 
-        // просто добавляем переменную в стек
-        if (variableStorageType == StorageType.Stack)
+        var stackTop = _stackTop;
+        for (int i = 0; i < size; i++)
         {
-            if (!_variables.TryGetValue(varName, out var st1))
+            int value = 0;
+            if (variableStorageType == StorageType.Heap)
             {
-                _variables[varName] = new Stack<Variable>();
+                value = InitObject(className, _heapTop);
             }
-            _variables[varName].Push(new Variable(className, _stackTop, StorageType.Stack, varName));
-            _stackAddresses[_stackTop] = 0;
-            _stackTop++;
-            return null;
-        }
         
-        if (!_variables.TryGetValue(varName, out var st2))
-        {
-            _variables[varName] = new Stack<Variable>();
+            InitVariable(varName, value);   
         }
-        _variables[varName].Push(new Variable(className, _stackTop, StorageType.Heap, varName));
-        _stackAddresses[_stackTop] = InitObject(className, _heapTop);
-        _stackTop++;
+        _variables[varName].Push(new Variable(className, stackTop, variableStorageType, varName));
         return null;
     }
 
@@ -90,6 +92,7 @@ public partial class CompiledAbaScriptInterpreter
         {
             return StorageType.Heap;
         }
+
         return StorageType.Stack;
     }
 
@@ -100,71 +103,74 @@ public partial class CompiledAbaScriptInterpreter
         {
             throw new RuntimeException("Stack underflow during STORE");
         }
+        var isArray = varName.EndsWith("[]");
+        var idx = 0;
+        if (isArray)
+        {
+            idx = _stack.Pop();
+        }
 
         var oldValue = 0;
         var newValue = 0;
         
-        if (!varName.Contains("."))
-        {
-            if (!_variables.TryGetValue(varName, out var value))
-            {
-                throw new RuntimeException("Variable not found: " + varName);
-            }
-
-            oldValue = _stackAddresses[value.Peek().Address];
-            newValue = _stack.Pop();
-            _stackAddresses[value.Peek().Address] = newValue;
-            if (!SimpleTypes.IsSimple(value.Peek().Type))
-            {
-                _linkCounter[oldValue]--;
-                _linkCounter[newValue]++;
-                if (_linkCounter[oldValue] == 0)
-                {
-                    DeleteHeapObject(value.Peek().Type, oldValue);
-                }
-            }
-            
-            return null;
-        }
-        
-        // ищем нужное поле в куче и присваиваем ему значение
         List<string> fields = varName.Split('.').ToList();
-        int address = _stackAddresses[_variables[fields[0]].Peek().Address];
+        int variableAddress = _variables[fields[0]].Peek().Address + idx;
+        int stackValue = _stackAddresses[variableAddress];
         string lastClassName = _variables[fields[0]].Peek().Type;
+        // ищем нужное поле в куче и присваиваем ему значение
         for (int i = 1; i < fields.Count; i++)
         {
-            for (int j = address; j < address + _classInfos[lastClassName].Fields.Count; j++)
+            for (int j = stackValue; j < stackValue + _classInfos[lastClassName].Fields.Count; j++)
             {
-                var fieldNum = j - address; 
+                var fieldNum = j - stackValue;
                 if (fields[i] == _classInfos[lastClassName].Fields[fieldNum].Name)
                 {
                     if (SimpleTypes.IsSimple(_classInfos[lastClassName].Fields[fieldNum].Type) || i == fields.Count - 1)
                     {
-                        address = j;
+                        stackValue = j;
                     }
                     else
                     {
-                        address = _heapAddresses[j];
+                        stackValue = _heapAddresses[j];
                     }
-                    
+
                     lastClassName = _classInfos[lastClassName].Fields[fieldNum].Type;
                     break;
                 }
             }
         }
-        
-        oldValue = _heapAddresses[address];
-        newValue = _stack.Pop();
-        _heapAddresses[address] = newValue;
-        if (!SimpleTypes.IsSimple(lastClassName))
+
+        if (varName.Contains("."))
         {
-            _linkCounter[oldValue]--;
-            _linkCounter[newValue]++;
-            if (_linkCounter[oldValue] == 0)
+            oldValue = _heapAddresses[stackValue];
+            newValue = _stack.Pop();
+            _heapAddresses[stackValue] = newValue;
+            if (!SimpleTypes.IsSimple(lastClassName))
             {
-                DeleteHeapObject(lastClassName, oldValue);
+                _linkCounter[oldValue]--;
+                _linkCounter[newValue]++;
+                if (_linkCounter[oldValue] == 0)
+                {
+                    DeleteHeapObject(lastClassName, oldValue);
+                }
+            }   
+        }
+        else
+        {
+            oldValue = stackValue;
+            newValue = _stack.Pop();
+            _stackAddresses[variableAddress] = newValue;
+            if (!SimpleTypes.IsSimple(lastClassName))
+            {
+                _linkCounter[oldValue]--;
+                _linkCounter[newValue]++;
+                if (_linkCounter[oldValue] == 0)
+                {
+                    DeleteHeapObject(lastClassName, oldValue);
+                }
             }
         }
+
         return null;
     }
 
@@ -172,7 +178,7 @@ public partial class CompiledAbaScriptInterpreter
     {
         _linkCounter.TryGetValue(startAddress, out var value);
         _linkCounter[startAddress] = value + 1;
-        
+
         _heapTop += _classInfos[className].Fields.Count;
         var varLimit = _heapTop;
         for (int i = _heapTop - _classInfos[className].Fields.Count; i < varLimit; i++)
@@ -180,7 +186,8 @@ public partial class CompiledAbaScriptInterpreter
             var field = _classInfos[className].Fields[i - _heapTop + _classInfos[className].Fields.Count];
             if (!SimpleTypes.IsSimple(field.Type))
             {
-                _heapAddresses[i] = InitObject(field.Type, _heapTop); // задаём сразу указатели на объекты внутри объекта
+                _heapAddresses[i] =
+                    InitObject(field.Type, _heapTop); // задаём сразу указатели на объекты внутри объекта
             }
             else
             {
@@ -189,5 +196,16 @@ public partial class CompiledAbaScriptInterpreter
         }
 
         return startAddress;
-    } 
+    }
+
+    public void InitVariable(string varName, int value)
+    {
+        if (!_variables.TryGetValue(varName, out var st))
+        {
+            _variables[varName] = new Stack<Variable>();
+        }
+        
+        _stackAddresses[_stackTop] = value;
+        _stackTop++;
+    }
 }

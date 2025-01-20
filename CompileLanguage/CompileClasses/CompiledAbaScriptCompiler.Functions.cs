@@ -10,6 +10,7 @@ public partial class CompiledAbaScriptCompiler
         var returnType = context.returnType().GetText();
         var parameters = context.typedParam()
             .Select(p => (p.type().GetText(), p.ID().GetText())).ToList();
+        _functions[funcName] = (parameters, returnType, context.block());
 
         _stringBuilder.AppendLine(funcName + ":");
         _stringBuilder.AppendLine(Keywords.ENTER_SCOPE);
@@ -23,8 +24,7 @@ public partial class CompiledAbaScriptCompiler
 
         _stringBuilder.AppendLine(Keywords.RET); // Лишний RET не помешает
         _stringBuilder.AppendLine(Keywords.EXIT_SCOPE);
-
-        _functions[funcName] = (parameters, returnType, context.block());
+        
         return context;
     }
 

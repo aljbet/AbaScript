@@ -5,6 +5,19 @@ namespace CompileLanguage.InterpreterClasses;
 
 public partial class CompiledAbaScriptInterpreter
 {
+    public override object? VisitCallInstruction(CompiledAbaScriptParser.CallInstructionContext context)
+    {
+        _functionCalls.Push(_commandPos);
+        return JumpToLabel(context.ID().GetText());
+    }
+
+    public override object? VisitRetInstruction(CompiledAbaScriptParser.RetInstructionContext context)
+    {
+        var oldCommandPos = _functionCalls.Pop();
+        _jumpDestination = oldCommandPos + 1;
+        return null;
+    }
+
     public override object? VisitEnterScope(CompiledAbaScriptParser.EnterScopeContext context)
     {
         _scopeStack.Push(_stackTop); // тут по сути в один стек умещаем несколько, под каждый скоуп
@@ -24,18 +37,21 @@ public partial class CompiledAbaScriptInterpreter
             {
                 variable = kv.Value.Peek();
             }
-
-            if (variable.StorageType == StorageType.Heap)
+            
+            if (variable.Name != null && variable.StorageType == StorageType.Heap)
             {
                 DeleteHeapObject(variable.Type, _stackAddresses[variable.Address]);   
             }
 
             // в любом случае снимаем всё со стека
             _stackAddresses.Remove(i);
-            _variables[variable.Name].Pop();
-            if (_variables[variable.Name].Count == 0)
+            if (variable.Name != null)
             {
-                _variables.Remove(variable.Name);
+                _variables[variable.Name].Pop();
+                if (_variables[variable.Name].Count == 0)
+                {
+                    _variables.Remove(variable.Name);
+                }   
             }
         }
         _stackTop = stackPointer;

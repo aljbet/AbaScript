@@ -25,6 +25,15 @@ instruction:
     | haltInstruction
     | enterScope
     | exitScope
+    | andInstruction
+    | orInstruction
+    | notInstruction
+    | eqInstruction
+    | neInstruction
+    | ltInstruction
+    | leInstruction
+    | gtInstruction
+    | geInstruction
     ;
 
 // Represents a LOAD instruction, which loads a variable's value onto the stack.
@@ -149,7 +158,7 @@ ENTER_SCOPE: 'ENTER_SCOPE';
 EXIT_SCOPE: 'EXIT_SCOPE';
 INIT: 'INIT';
 
-ID  : [a-zA-Z_][a-zA-Z0-9_]*;
+ID  : [a-zA-Z_][a-zA-Z0-9_]*('['']')?;
 NUMBER : [0-9]+ ;
 STRING : '"' ('\\"'|.)*? '"';
 
