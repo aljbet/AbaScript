@@ -4,64 +4,6 @@ using CompileLanguage.Exceptions;
 
 namespace CompileLanguage.InterpreterClasses;
 
-// где храним переменную
-public enum Storage
-{
-    Heap,
-    Stack
-}
-
-public struct Variable
-{
-    public Variable(string type, int address, Storage storage, string name)
-    {
-        Type = type;
-        Address = address;
-        Storage = storage;
-        Name = name;
-    }
-    
-    public string Type;
-    public int Address;
-    public Storage Storage;
-    public string Name;
-}
-
-public struct FieldInfo
-{
-    public FieldInfo(string type, string name)
-    {
-        Type = type;
-        Name = name;
-    }
-    
-    public string Type;
-    public string Name;
-}
-
-// этот контекст можно будет заранее обработать
-public struct ClassInfo
-{
-    public FieldInfo[] Fields;
-    
-    public ClassInfo(FieldInfo[] fields)
-    {
-        Fields = fields;
-    }
-}
-
-public struct SimpleTypes
-{
-    public static String boolType = "bool";
-    public static String intType = "int";
-    public static String stringType = "string";
-
-    public static bool IsSimple(String t)
-    {
-        return t == boolType || t == intType || t == stringType;
-    }
-}
-
 public partial class CompiledAbaScriptInterpreter : CompiledAbaScriptBaseVisitor<object?>
 {
     private readonly Dictionary<string, int> _labels = new();

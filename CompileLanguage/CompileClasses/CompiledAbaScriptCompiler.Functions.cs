@@ -6,22 +6,40 @@ public partial class CompiledAbaScriptCompiler
 {
     public override object? VisitFunctionDef(AbaScriptParser.FunctionDefContext context)
     {
-        _stringBuilder.Append(context.ID() + ":");
-        // надо добавить в словарь functionLabels но я хз какой тут i
-        for (int i = context.typedParam().Length - 1; i >= 0; i--)
+        var funcName = context.ID().GetText();
+        var returnType = context.returnType().GetText();
+        var parameters = context.typedParam().Select(p => (p.type().GetText(), p.ID().GetText())).ToList();
+        
+        _stringBuilder.AppendLine(funcName + ":");
+        _stringBuilder.AppendLine(Keywords.ENTER_SCOPE);
+        for (var i = context.typedParam().Length - 1; i >= 0; i--)
         {
-            _stringBuilder.AppendLine($"{Keywords.STORE} { context.typedParam(i).ID()}");
+            _stringBuilder.AppendLine($"{Keywords.STORE} {funcName}"); // Развернутое вытаскивание элементов со стека
         }
 
         VisitBlock(context.block());
-
-        /*
-         * в конец надо добавить jmp на место, откуда его вызвали, но как его запоминать?
-         * можем прыгать только по лейблам, получается каждый вызов функции отдельный лейбл?...
-         * сделала стек returnPoints, должен как раз хранить числа, соответствующие нужным лейблам.
-         */
         
+        _stringBuilder.AppendLine(Keywords.RET); // Лишний RET не помешает
+        _stringBuilder.AppendLine(Keywords.EXIT_SCOPE);
+        
+        _functions[funcName] = (parameters, returnType, context.block());
         return context;
+    }
+
+    public override object? VisitFuncCall(AbaScriptParser.FuncCallContext context)
+    {
+        var funcName = context.ID().GetText();
+
+        if (!_functions.TryGetValue(funcName, out var functionInfo))
+            throw new InvalidOperationException($"Функция '{funcName}' не определена.");
+
+        foreach (var expr in context.expr())
+        {
+            Visit(expr); // Забил на обработку ошибок, засовывание в стек элементов
+        }
+        _stringBuilder.AppendLine($"{Keywords.CALL} {funcName}");
+        
+        return null;
     }
 
     public override object? VisitBlock(AbaScriptParser.BlockContext context)
@@ -32,5 +50,12 @@ public partial class CompiledAbaScriptCompiler
         }
         
         return context;
+    }
+
+    public override object? VisitReturnStatement(AbaScriptParser.ReturnStatementContext context)
+    {
+        Visit(context.expr());
+        _stringBuilder.AppendLine(Keywords.RET);
+        return null;
     }
 }

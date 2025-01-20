@@ -1,5 +1,7 @@
 ﻿using System.Text;
 using AbaScript.AntlrClasses;
+using AbaScript.AntlrClasses.Models;
+using CompileLanguage.InterpreterClasses;
 using CompileLanguage.Services;
 
 namespace CompileLanguage.CompileClasses;
@@ -7,10 +9,12 @@ namespace CompileLanguage.CompileClasses;
 public partial class CompiledAbaScriptCompiler : AbaScriptBaseVisitor<object?>
 {
     private readonly StringBuilder _stringBuilder = new();
-    private Dictionary<string, int> functionLabels = new();
-    private Dictionary<string, int> variableOffsets = new(); // Track variable offsets within functions
-    private Stack<int> returnPoints = new(); // запоминает, куда возвращаться после вызова функции.
     private readonly IVariableStorage _variableStorage = new VariableStorage();
+    private Dictionary<string, ClassInfo> _classContexts = new();
+    private readonly Dictionary<string, ClassInstance> _classInstances = new();
+    private readonly Dictionary<string, (List<(string type, string name)> Parameters, string ReturnType,
+        AbaScriptParser.BlockContext Body)> _functions
+        = new();
 
     public override object? VisitScript(AbaScriptParser.ScriptContext context)
     {
@@ -45,6 +49,11 @@ public partial class CompiledAbaScriptCompiler : AbaScriptBaseVisitor<object?>
     public string GetActualCompiledCode()
     {
         return _stringBuilder.ToString();
+    }
+
+    public Dictionary<string, ClassInfo> GetClassesContext()
+    {
+        return _classContexts;
     }
 
     private void SetUpService()

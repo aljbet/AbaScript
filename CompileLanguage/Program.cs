@@ -70,18 +70,18 @@ HALT
         ";
 
 var classesDict = new Dictionary<string, ClassInfo>();
-FieldInfo[] fields1 = new []
+var fields1 = new List<FieldInfo>(new []
 {
         new FieldInfo("int", "test1"),
         new FieldInfo("testClass2", "test2"),
         new FieldInfo("int", "test3"),
         new FieldInfo("testClass2", "test4"),
-};
-FieldInfo[] fields2 = new []
+});
+var fields2 = new List<FieldInfo>(new []
 {
         new FieldInfo("int", "test1"),
         new FieldInfo("int", "test2"),
-};
+});
 classesDict.Add("testClass1", new ClassInfo(fields1));
 classesDict.Add("testClass2", new ClassInfo(fields2));
 

@@ -25,7 +25,7 @@ public partial class CompiledAbaScriptInterpreter
         string lastClassName = _variables[fields[0]].Peek().Type;
         for (int i = 1; i < fields.Count; i++)
         {
-            for (int j = address; j < address + _classInfos[lastClassName].Fields.Length; j++)
+            for (int j = address; j < address + _classInfos[lastClassName].Fields.Count; j++)
             {
                 var fieldNum = j - address;
                 if (fields[i] == _classInfos[lastClassName].Fields[fieldNum].Name)
@@ -53,16 +53,16 @@ public partial class CompiledAbaScriptInterpreter
     {
         var varName = context.ID().GetText();
         var className = context.className().GetText();
-        Storage variableStorage = DetermineStorage(varName, className);
+        StorageType variableStorageType = DetermineStorage(varName, className);
 
         // просто добавляем переменную в стек
-        if (variableStorage == Storage.Stack)
+        if (variableStorageType == StorageType.Stack)
         {
             if (!_variables.TryGetValue(varName, out var st1))
             {
                 _variables[varName] = new Stack<Variable>();
             }
-            _variables[varName].Push(new Variable(className, _stackTop, Storage.Stack, varName));
+            _variables[varName].Push(new Variable(className, _stackTop, StorageType.Stack, varName));
             _stackAddresses[_stackTop] = 0;
             _stackTop++;
             return null;
@@ -72,25 +72,25 @@ public partial class CompiledAbaScriptInterpreter
         {
             _variables[varName] = new Stack<Variable>();
         }
-        _variables[varName].Push(new Variable(className, _stackTop, Storage.Heap, varName));
+        _variables[varName].Push(new Variable(className, _stackTop, StorageType.Heap, varName));
         _stackAddresses[_stackTop] = InitObject(className, _heapTop);
         _stackTop++;
         return null;
     }
 
     // определяем, где будем хранить объект, если это поле класса или сам инстанс класса, то heap, иначе стек
-    public Storage DetermineStorage(String varName, String className)
+    public StorageType DetermineStorage(String varName, String className)
     {
         if (!SimpleTypes.IsSimple(className))
         {
-            return Storage.Heap;
+            return StorageType.Heap;
         }
 
         if (varName.Contains("."))
         {
-            return Storage.Heap;
+            return StorageType.Heap;
         }
-        return Storage.Stack;
+        return StorageType.Stack;
     }
 
     public override object? VisitStoreInstruction(CompiledAbaScriptParser.StoreInstructionContext context)
@@ -133,7 +133,7 @@ public partial class CompiledAbaScriptInterpreter
         string lastClassName = _variables[fields[0]].Peek().Type;
         for (int i = 1; i < fields.Count; i++)
         {
-            for (int j = address; j < address + _classInfos[lastClassName].Fields.Length; j++)
+            for (int j = address; j < address + _classInfos[lastClassName].Fields.Count; j++)
             {
                 var fieldNum = j - address; 
                 if (fields[i] == _classInfos[lastClassName].Fields[fieldNum].Name)
@@ -173,11 +173,11 @@ public partial class CompiledAbaScriptInterpreter
         _linkCounter.TryGetValue(startAddress, out var value);
         _linkCounter[startAddress] = value + 1;
         
-        _heapTop += _classInfos[className].Fields.Length;
+        _heapTop += _classInfos[className].Fields.Count;
         var varLimit = _heapTop;
-        for (int i = _heapTop - _classInfos[className].Fields.Length; i < varLimit; i++)
+        for (int i = _heapTop - _classInfos[className].Fields.Count; i < varLimit; i++)
         {
-            var field = _classInfos[className].Fields[i - _heapTop + _classInfos[className].Fields.Length];
+            var field = _classInfos[className].Fields[i - _heapTop + _classInfos[className].Fields.Count];
             if (!SimpleTypes.IsSimple(field.Type))
             {
                 _heapAddresses[i] = InitObject(field.Type, _heapTop); // задаём сразу указатели на объекты внутри объекта

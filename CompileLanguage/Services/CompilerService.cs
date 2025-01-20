@@ -14,7 +14,7 @@ public class CompilerService : IExecutable
         var tree = _treeCreator.CreateTree(input);
 
         _compiler = new CompiledAbaScriptCompiler();
-        _interpreter = new CompiledAbaScriptInterpreter(new Dictionary<string, ClassInfo>());
+        _interpreter = new CompiledAbaScriptInterpreter(_compiler.GetClassesContext());
         var compiledCode = _compiler.Visit(tree);
         if (compiledCode is not string code)
         {

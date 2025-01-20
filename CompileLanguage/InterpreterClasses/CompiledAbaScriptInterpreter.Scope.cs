@@ -19,16 +19,13 @@ public partial class CompiledAbaScriptInterpreter
         {
             var j = _stackAddresses[i];
             // ищем название переменной по её адресу (возможно стоит добавить ещё одну мапу)
-            Variable variable = new Variable();
-            foreach (var kv in _variables)
+            var variable = new Variable();
+            foreach (var kv in _variables.Where(kv => _stackAddresses[kv.Value.Peek().Address] == j))
             {
-                if (_stackAddresses[kv.Value.Peek().Address] == j)
-                {
-                    variable = kv.Value.Peek();
-                }
+                variable = kv.Value.Peek();
             }
 
-            if (variable.Storage == Storage.Heap)
+            if (variable.StorageType == StorageType.Heap)
             {
                 DeleteHeapObject(variable.Type, _stackAddresses[variable.Address]);   
             }
@@ -55,7 +52,7 @@ public partial class CompiledAbaScriptInterpreter
         }
         
         // проходим по всем полям класса и чистим 
-        for (int i = address; i < _classInfos[type].Fields.Length + address; i++)
+        for (int i = address; i < _classInfos[type].Fields.Count + address; i++)
         {
             var heapObject = _heapAddresses[i];
             if (!SimpleTypes.IsSimple(_classInfos[type].Fields[i - address].Type))
