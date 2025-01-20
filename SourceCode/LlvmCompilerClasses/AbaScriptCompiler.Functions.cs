@@ -79,7 +79,6 @@ public partial class AbaScriptCompiler
 
         // Validate the generated code, checking for consistency.
         function.VerifyFunction(LLVMVerifierFailureAction.LLVMAbortProcessAction);
-        //function.VerifyFunction(LLVMVerifierFailureAction.LLVMPrintMessageAction);
 
         _valueStack.Push(function);
 

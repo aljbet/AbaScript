@@ -13,9 +13,5 @@ var input = File.ReadAllText(path);
 Console.WriteLine(curFileName);
 // var runService = new InterpreterService();
 var runService = new LlvmService();
-
-// runService.IsJitNeeded = args.Contains("jit");
-// runService.IsOptimizationsNeeded = args.Contains("optimizations");
-runService.IsJitNeeded = true;
 runService.IsOptimizationsNeeded = true;
 runService.RunCode(input);

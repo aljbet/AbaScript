@@ -7,8 +7,6 @@ public partial class AbaScriptCompiler
 {
     public override object VisitVariableDeclaration(AbaScriptParser.VariableDeclarationContext context)
     {
-        // TODO: пофиксить повторное объявление переменных
-
         var varType = context.type().GetText();
         var varName = context.ID().GetText();
 
@@ -102,7 +100,6 @@ public partial class AbaScriptCompiler
         string variableName = context.ID().GetText();
         if (context.expr() != null) // array element
         {
-            // TODO: обрабатывать границы массива
             Visit(context.expr());
             var index = _valueStack.Pop();
 
@@ -129,33 +126,9 @@ public partial class AbaScriptCompiler
 
         return context;
     }
-/*
-    public override object VisitInputStatement(AbaScriptParser.InputStatementContext context)
-    {
-        var varName = context.ID().GetText();
-        Console.Write($"Введите значение для {varName}: ");
-        var input = Console.ReadLine();
-
-        if (!_variables.ContainsKey(varName))
-            throw new InvalidOperationException($"Переменная '{varName}' не объявлена.");
-        var value = TryParseNumber(input);
-        switch (value)
-        {
-            case int valueInt:
-                _variables[varName] = GetRefFromInt(valueInt);
-                break;
-            case string valueStr:
-                _variables[varName] = GetRefFromString(valueStr);
-                break;
-        }
-
-        return context;
-    }*/
 
     public override object VisitOutputStatement(AbaScriptParser.OutputStatementContext context)
     {
-        // TODO: пока что подразумевается, что принтится int (для элементов массива тоже работает)
-
         Visit(context.expr());
         var currentElement = _valueStack.Pop();
 
@@ -163,16 +136,7 @@ public partial class AbaScriptCompiler
         var call = _builder.BuildCall2(printFnTy, GetOrCreatePrintFunc(), new[] { currentElement });
 
         _valueStack.Push(call);
-        // // switch (currentElement.TypeOf.Kind)
-        // // {
-        // //     case LLVMTypeKind.LLVMIntegerTypeKind:
-        // //         Console.WriteLine(GetIntFromRef(currentElement));
-        // //         break;
-        // //     case LLVMTypeKind.LLVMArrayTypeKind:
-        // //         Console.WriteLine(GetStringFromRef(currentElement));
-        // //         break;
-        // // }
-        // //
+
         return context;
     }
 
@@ -185,14 +149,6 @@ public partial class AbaScriptCompiler
         }
 
         throw new InvalidOperationException($"Невозможно преобразовать в число: {context.GetText()}");
-    }
-
-    public override object VisitString(AbaScriptParser.StringContext context)
-    {
-        var str = context.GetText().Trim('"');
-        _valueStack.Push(GetRefFromString(str));
-
-        return context;
     }
 
     private LLVMValueRef GetOrCreatePrintFunc()
@@ -227,7 +183,7 @@ public partial class AbaScriptCompiler
 
         var buffer = _builder.BuildAlloca(ptrType, "print.buffer");
         var bufferSize =
-            LLVMValueRef.CreateConstInt(_context.Int32Type, 1024 * 4); // TODO: подумать каким должен быть N
+            LLVMValueRef.CreateConstInt(_context.Int32Type, 1024 * 4);
         _builder.BuildStore(_builder.BuildArrayMalloc(_context.Int8Type, bufferSize), buffer);
         var originalBuffer = _builder.BuildLoad2(ptrType, buffer);
 

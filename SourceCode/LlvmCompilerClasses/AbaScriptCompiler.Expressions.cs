@@ -3,12 +3,10 @@ using LLVMSharp.Interop;
 
 namespace AbaScript.LlvmCompilerClasses;
 
-// TODO: унарный минус
 public partial class AbaScriptCompiler
 {
     public override object VisitAddSub(AbaScriptParser.AddSubContext context)
     {
-        // TODO: работает только для интов
         Visit(context.expr());
         Visit(context.term());
 
@@ -37,24 +35,6 @@ public partial class AbaScriptCompiler
                 }
 
                 break;
-            // case LLVMTypeKind.LLVMArrayTypeKind:
-            //     if (left.TypeOf.Kind != LLVMTypeKind.LLVMArrayTypeKind)
-            //     {
-            //         throw new InvalidOperationException("Incompatible types.");
-            //     }
-            //
-            //     var leftAsString = GetStringFromRef(left);
-            //     var rightAsString = GetStringFromRef(right);
-            //     switch (operatorText)
-            //     {
-            //         case "+":
-            //             _valueStack.Push(GetRefFromString(leftAsString + rightAsString));
-            //             break;
-            //         default:
-            //             throw new InvalidOperationException("Unsupported operation");
-            //     }
-            //
-            //     break;
             default:
                 throw new InvalidOperationException("Unsupported types");
         }
@@ -65,8 +45,6 @@ public partial class AbaScriptCompiler
 
     public override object VisitMulDivMod(AbaScriptParser.MulDivModContext context)
     {
-        // TODO: работает только для интов
-
         Visit(context.term());
         Visit(context.factor());
 
@@ -137,8 +115,6 @@ public partial class AbaScriptCompiler
 
     public override object VisitCondition(AbaScriptParser.ConditionContext context)
     {
-        // TODO: работает только для интов
-
         if (context.logicalExpr() != null)
         {
             Visit(context.logicalExpr());

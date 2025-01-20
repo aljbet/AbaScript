@@ -7,7 +7,6 @@ public partial class AbaScriptCompiler
 {
     public override object VisitIfStatement(AbaScriptParser.IfStatementContext context)
     {
-        // TODO: elif
         Visit(context.logicalExpr(0));
         var condition = _valueStack.Pop();
         var condv = _builder.BuildICmp(LLVMIntPredicate.LLVMIntNE, condition,
@@ -70,7 +69,6 @@ public partial class AbaScriptCompiler
         }
         _builder.BuildBr(loopCondBB);
 
-        //_valueStack.Push(LLVMValueRef.CreateConstInt(_context.GetIntType(1), 0));
         _builder.PositionAtEnd(loopAfterBB);
 
         return context;
