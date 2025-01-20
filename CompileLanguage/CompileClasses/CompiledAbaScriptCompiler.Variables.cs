@@ -11,9 +11,11 @@ public partial class CompiledAbaScriptCompiler
         var id = context.ID().GetText();
         if (context.NUMBER() != null)
         {
-            // TODO: тут нет INIT
             var count = int.Parse(context.NUMBER().GetText());
-            CreateEmptyArray(id, count);
+            
+            _stringBuilder.AppendLine($"{Keywords.PUSH} {count}");
+            _stringBuilder.AppendLine($"{Keywords.INIT} {id}[] {context.type().GetText()}");
+
             return null;
         }
 
@@ -24,7 +26,7 @@ public partial class CompiledAbaScriptCompiler
             Visit(context.expr());
             _stringBuilder.AppendLine($"{Keywords.STORE} {context.ID()}");
         }
-
+        
         // TODO: понять, нужно ли это
         // _variableStorage.SaveVariable(id, new IntVariable()
         // {
@@ -34,41 +36,33 @@ public partial class CompiledAbaScriptCompiler
         return context;
     }
 
-    private void CreateEmptyArray(string id, int count)
+    public override object? VisitAssignment(AbaScriptParser.AssignmentContext context)
     {
-        for (var i = 0; i < count; i++)
+        if (context.expr().Length > 1) // array
         {
-            _stringBuilder.AppendLine($"{Keywords.PUSH} 0");
-            _stringBuilder.AppendLine($"{Keywords.STORE} {id}[{i}]");
+            var indexExpr = context.expr(0);
+            var valueExpr = context.expr(1);
+            Visit(valueExpr);
+            Visit(indexExpr);
+            _stringBuilder.AppendLine($"{Keywords.STORE} {context.ID()}[]");
         }
-
-        // TODO: понять, нужно ли это
-        // _variableStorage.SaveVariable(id, new ArrayVariable
-        // {
-        //     Value = new int[count]
-        // });
-    }
-
-    public override object VisitAssignment(AbaScriptParser.AssignmentContext context)
-    {
-        // работает только с интами
-        if (context.expr().Length > 1)
+        else
         {
-            throw new RuntimeException("can't work with arrays yet");
+            Visit(context.expr(0));
+            _stringBuilder.AppendLine($"{Keywords.STORE} {context.ID()}");
         }
-
-        Visit(context.expr(0));
-        _stringBuilder.AppendLine($"{Keywords.STORE} {context.ID()}");
 
         return context;
     }
 
-    public override object VisitVariableOrArrayAccess(AbaScriptParser.VariableOrArrayAccessContext context)
+    public override object? VisitVariableOrArrayAccess(AbaScriptParser.VariableOrArrayAccessContext context)
     {
         string variableName = context.ID().GetText();
         if (context.expr() != null) // array element
         {
-            throw new RuntimeException("can't work with arrays yet");
+            var indexExpr = context.expr();
+            Visit(indexExpr);
+            _stringBuilder.AppendLine($"{Keywords.LOAD} {variableName}[]");
         }
         else // int or array
         {
@@ -79,15 +73,15 @@ public partial class CompiledAbaScriptCompiler
         return context;
     }
 
-    public override object VisitNumber(AbaScriptParser.NumberContext context)
+    public override object? VisitNumber(AbaScriptParser.NumberContext context)
     {
-        if (!long.TryParse(context.GetText(), out var number))
+        if (long.TryParse(context.GetText(), out var number))
         {
-            throw new InvalidOperationException($"Невозможно преобразовать в число: {context.GetText()}");
+            _stringBuilder.AppendLine($"{Keywords.PUSH} {number}");
+            
+            return context;
         }
 
-        _stringBuilder.AppendLine($"{Keywords.PUSH} {number}");
-
-        return context;
+        throw new InvalidOperationException($"Невозможно преобразовать в число: {context.GetText()}");
     }
 }
