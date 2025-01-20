@@ -27,12 +27,24 @@ public struct Variable
     public string Name;
 }
 
+public struct FieldInfo
+{
+    public FieldInfo(string type, string name)
+    {
+        Type = type;
+        Name = name;
+    }
+    
+    public string Type;
+    public string Name;
+}
+
 // этот контекст можно будет заранее обработать
 public struct ClassInfo
 {
-    public Variable[] Fields;
+    public FieldInfo[] Fields;
     
-    public ClassInfo(Variable[] fields)
+    public ClassInfo(FieldInfo[] fields)
     {
         Fields = fields;
     }
@@ -60,10 +72,15 @@ public partial class CompiledAbaScriptInterpreter : CompiledAbaScriptBaseVisitor
     Dictionary<int, int> _stackAddresses = new();        // адресное пространство стека
     Dictionary<int, int> _linkCounter = new();           // счётчик ссылок
     private Stack<int> _scopeStack = new();
-    private int _stackTop = 0;
-    private int _heapTop = 0;
+    private int _stackTop;
+    private int _heapTop;
     
-    private Dictionary<String, ClassInfo> _classInfos = new();
+    private Dictionary<String, ClassInfo> _classInfos;
+
+    public CompiledAbaScriptInterpreter(Dictionary<String, ClassInfo> classInfos)
+    {
+        _classInfos = classInfos;
+    }
 
     public void Interpret(string input)
     {

@@ -6,7 +6,7 @@ namespace CompileLanguage.Services;
 public class CompilerService : IExecutable
 {
     private CompiledAbaScriptCompiler _compiler = new CompiledAbaScriptCompiler();
-    private CompiledAbaScriptInterpreter _interpreter = new CompiledAbaScriptInterpreter();
+    private CompiledAbaScriptInterpreter _interpreter = new CompiledAbaScriptInterpreter(new Dictionary<string, ClassInfo>());
     private readonly IParseTreeCreator _treeCreator = new AbaScriptTreeCreator();
     
     public void Execute(string input)
@@ -14,7 +14,7 @@ public class CompilerService : IExecutable
         var tree = _treeCreator.CreateTree(input);
 
         _compiler = new CompiledAbaScriptCompiler();
-        _interpreter = new CompiledAbaScriptInterpreter();
+        _interpreter = new CompiledAbaScriptInterpreter(new Dictionary<string, ClassInfo>());
         var compiledCode = _compiler.Visit(tree);
         if (compiledCode is not string code)
         {

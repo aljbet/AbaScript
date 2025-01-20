@@ -5,23 +5,24 @@ namespace CompileLanguage.InterpreterClasses;
 
 public partial class CompiledAbaScriptInterpreter
 {
-    public override object? VisitEnterScopeInstruction(CompiledAbaScriptParser.LoadInstructionContext context)
+    public override object? VisitEnterScope(CompiledAbaScriptParser.EnterScopeContext context)
     {
         _scopeStack.Push(_stackTop); // тут по сути в один стек умещаем несколько, под каждый скоуп
         return null;
     }
 
-    public override object? VisitExitScopeInstruction(CompiledAbaScriptParser.LoadInstructionContext context)
+    public override object? VisitExitScope(CompiledAbaScriptParser.ExitScopeContext context)
     {
         var stackPointer = _scopeStack.Pop();
         // чистим стек
         for (int i = _stackTop - 1; i >= stackPointer; i--)
         {
+            var j = _stackAddresses[i];
             // ищем название переменной по её адресу (возможно стоит добавить ещё одну мапу)
             Variable variable = new Variable();
             foreach (var kv in _variables)
             {
-                if (kv.Value.Address == i)
+                if (_stackAddresses[kv.Value.Address] == j)
                 {
                     variable = kv.Value;
                 }
@@ -29,7 +30,7 @@ public partial class CompiledAbaScriptInterpreter
 
             if (variable.Storage == Storage.Heap)
             {
-                DeleteHeapObject(variable.Type, variable.Address);   
+                DeleteHeapObject(variable.Type, _stackAddresses[variable.Address]);   
             }
 
             // в любом случае снимаем всё со стека
@@ -44,7 +45,7 @@ public partial class CompiledAbaScriptInterpreter
     {
         // нет потребности удалять объект, если counter ненулевой
         _linkCounter[address]--;
-        if (_linkCounter[address] != 0)
+        if (_linkCounter[address] > 0)
         {
             return;
         }
@@ -53,7 +54,7 @@ public partial class CompiledAbaScriptInterpreter
         for (int i = address; i < _classInfos[type].Fields.Length + address; i++)
         {
             var heapObject = _heapAddresses[i];
-            if (SimpleTypes.IsSimple(_classInfos[type].Fields[i - address].Type))
+            if (!SimpleTypes.IsSimple(_classInfos[type].Fields[i - address].Type))
             {
                 // в данном случае heapObject это указатель на другой объект в heap
                 DeleteHeapObject(_classInfos[type].Fields[i - address].Type, heapObject);
