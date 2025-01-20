@@ -57,6 +57,33 @@ divInstruction: DIV;
 // Represents a MOD instruction, which computes the modulus of the second top stack value by the top value.
 modInstruction: MOD;
 
+// Represents an AND instruction, which computes the logical and of two top stack values.
+andInstruction: AND;
+
+// Represents an OR instruction, which computes the logical or of two top stack values.
+orInstruction: OR;
+
+// Represents a NOT instruction, which computes the logical not of the top stack value.
+notInstruction: NOT;
+
+// Represents an EQ instruction, which puts 1 on stack if two top stack values are equal, 0 otherwise.
+eqInstruction: EQ;
+
+// Represents a NE instruction, which puts 0 on stack if two top stack values are equal, 1 otherwise.
+neInstruction: NE;
+
+// Represents a LT instruction, which puts 1 on stack if second top value is less than top value, 0 otherwise.
+ltInstruction: LT;
+
+// Represents a LE instruction, which puts 1 on stack if second top value is less than or equal to top value, 0 otherwise.
+leInstruction: LE;
+
+// Represents a LT instruction, which puts 1 on stack if second top value is greater than top value, 0 otherwise.
+gtInstruction: GT;
+
+// Represents a LT instruction, which puts 1 on stack if second top value is greate than or equal to top value, 0 otherwise.
+geInstruction: GE;
+
 // Represents a JMP instruction, which jumps to a specified label.
 jmpInstruction: JMP labelRef;
 
@@ -103,6 +130,15 @@ SUB: 'SUB';
 MUL: 'MUL';
 DIV: 'DIV';
 MOD: 'MOD';
+AND: 'AND';
+OR: 'OR';
+NOT: 'NOT';
+EQ: 'EQ';
+NE: 'NE';
+LT: 'LT';
+LE: 'LE';
+GT: 'GT';
+GE: 'GE';
 JMP: 'JMP';
 IF_THEN_ELSE: 'IF_THEN_ELSE';
 CALL: 'CALL';
