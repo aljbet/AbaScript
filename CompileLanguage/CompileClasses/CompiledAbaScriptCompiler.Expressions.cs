@@ -45,8 +45,9 @@ public partial class CompiledAbaScriptCompiler
     
     public override object VisitOutputStatement(AbaScriptParser.OutputStatementContext context)
     {
-        _stringBuilder.AppendLine($"PUSH {Visit(context.expr())}");
+        Visit(context.expr());
         _stringBuilder.AppendLine("PRINT");
+
         return null;
     }
 }
