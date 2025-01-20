@@ -25,16 +25,16 @@ public partial class CompiledAbaScriptCompiler : AbaScriptBaseVisitor<object?>
             Visit(classDef);
         }
 
-        foreach (var funcDef in context.functionDef().Where(func => func.ID().GetText() != "main"))
+        foreach (var funcDef in context.functionDef())
         {
             Visit(funcDef);
         }
         
-        var mainFunction = context.functionDef().FirstOrDefault(func => func.ID().GetText() == "main");
-        if (mainFunction != null)
-        {
-            VisitMainFunction(mainFunction);
-        }
+        // var mainFunction = context.functionDef().FirstOrDefault(func => func.ID().GetText() == "main");
+        // if (mainFunction != null)
+        // {
+        //     VisitMainFunction(mainFunction);
+        // }
 
 
         return _stringBuilder.ToString();

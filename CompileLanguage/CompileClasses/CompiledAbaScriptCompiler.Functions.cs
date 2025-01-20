@@ -14,7 +14,8 @@ public partial class CompiledAbaScriptCompiler
         _stringBuilder.AppendLine(Keywords.ENTER_SCOPE);
         for (var i = context.typedParam().Length - 1; i >= 0; i--)
         {
-            _stringBuilder.AppendLine($"{Keywords.STORE} {funcName}"); // Развернутое вытаскивание элементов со стека
+            _stringBuilder.AppendLine($"{Keywords.INIT} {context.typedParam()[i].ID().GetText()} {context.typedParam()[i].type().GetText()}");
+            _stringBuilder.AppendLine($"{Keywords.STORE} {context.typedParam()[i].ID().GetText()}"); // Развернутое вытаскивание элементов со стека
         }
 
         VisitBlock(context.block());
