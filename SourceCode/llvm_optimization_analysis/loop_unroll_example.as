@@ -1,6 +1,6 @@
 func int main() {
-    int abas[1000];
-    int n = 1000;
+    int abas[10];
+    int n = 10;
 
     int i;
     int j;

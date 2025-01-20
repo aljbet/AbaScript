@@ -1,0 +1,63 @@
+LLVM IR
+=========
+; ModuleID = 'AbaScript'
+source_filename = "AbaScript"
+
+@0 = private unnamed_addr constant [6 x i8] c"%I64d\00", align 1
+
+define i32 @"$print"(i64 %x) {
+entry:
+  %0 = alloca i64, align 8
+  store i64 %x, ptr %0, align 4
+  %print.buffer = alloca ptr, align 8
+  %1 = bitcast i32 4096 to i32
+  %mallocsize = mul i32 %1, ptrtoint (ptr getelementptr (i8, ptr null, i32 1) to i32)
+  %malloccall = tail call ptr @malloc(i32 %mallocsize)
+  %2 = bitcast ptr %malloccall to ptr
+  store ptr %2, ptr %print.buffer, align 8
+  %3 = load ptr, ptr %print.buffer, align 8
+  %4 = load i64, ptr %0, align 4
+  %5 = call i32 (ptr, ptr, ...) @sprintf(ptr %3, ptr @0, i64 %4)
+  %6 = call i32 @puts(ptr %3)
+  tail call void @free(ptr %3)
+  ret i32 0
+}
+
+declare i32 @puts(ptr)
+
+declare noalias ptr @malloc(i32)
+
+declare i32 @sprintf(ptr, ptr, ...)
+
+declare void @free(ptr)
+
+define i64 @factorial(i64 %x) {
+entry:
+  %0 = alloca i64, align 8
+  store i64 %x, ptr %0, align 4
+  %1 = load i64, ptr %0, align 4
+  %2 = icmp eq i64 %1, 1
+  %ifcond = icmp ne i1 %2, false
+  br i1 %ifcond, label %then, label %else
+
+then:                                             ; preds = %entry
+  ret i64 1
+
+else:                                             ; preds = %entry
+  %3 = load i64, ptr %0, align 4
+  %4 = load i64, ptr %0, align 4
+  %5 = sub i64 %4, 1
+  %6 = call i64 @factorial(i64 %5)
+  %7 = mul i64 %3, %6
+  ret i64 %7
+
+merge:                                            ; No predecessors!
+  ret i64 0
+}
+
+define i64 @main() {
+entry:
+  %0 = call i64 @factorial(i64 20)
+  %1 = call i32 @"$print"(i64 %0)
+  ret i64 0
+}

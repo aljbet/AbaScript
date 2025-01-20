@@ -1,4 +1,6 @@
-﻿using AbaScript.LlvmCompilerClasses;
+﻿using System.ComponentModel;
+using System.Runtime.InteropServices;
+using AbaScript.LlvmCompilerClasses;
 using AbaScript.Services.Interfaces;
 using LLVMSharp.Interop;
 
@@ -6,6 +8,10 @@ namespace AbaScript.Services;
 
 public class LlvmService : RunService
 {
+    public bool IsJitNeeded { get; set; }
+    
+    public bool IsOptimizationsNeeded { get; set; }
+
     public override object? RunCode(string input)
     {
         var tree = SetUpParseTree(input);
@@ -21,14 +27,27 @@ public class LlvmService : RunService
         var builder = context.CreateBuilder();
         var visitor = new AbaScriptCompiler(context, module, builder);
         visitor.Visit(tree);
-        Console.WriteLine($"LLVM IR\n=========\n{module}");
-
+        
         // Initialize LLVM
         LLVM.InitializeAllTargetInfos();
         LLVM.InitializeAllTargets();
         LLVM.InitializeAllTargetMCs();
         LLVM.InitializeAllAsmParsers();
         LLVM.InitializeAllAsmPrinters();
+        
+        // Passes
+        if (IsOptimizationsNeeded)
+        {
+            var passManager = LLVMPassManagerRef.Create();
+            passManager.AddCFGSimplificationPass(); // block merge and dead code elimination
+            passManager.AddTailCallEliminationPass();
+            passManager.AddPromoteMemoryToRegisterPass();
+            passManager.AddLoopUnrollPass();
+
+            passManager.Run(module);
+        }
+
+        Console.WriteLine($"LLVM IR\n=========\n{module}");
 
         var triple = LLVMTargetRef.DefaultTriple;
         Console.WriteLine($"Targeting {triple}");
@@ -41,29 +60,31 @@ public class LlvmService : RunService
             LLVMRelocMode.LLVMRelocDefault,
             LLVMCodeModel.LLVMCodeModelDefault);
 
-        var outFile = "out.o";
+        // var outFile = "out.o";
+        // targetMachine.EmitToFile(module, outFile, LLVMCodeGenFileType.LLVMObjectFile);
+        // Console.WriteLine($"Compiled to {outFile}");
 
-        targetMachine.EmitToFile(module, outFile, LLVMCodeGenFileType.LLVMObjectFile);
-        Console.WriteLine($"Compiled to {outFile}");
-        
         // Run with the Just-In Time engine
-        // if (args.Contains("jit"))
-        // {
-            // var engine = module.CreateExecutionEngine();
-            // var main = module.GetNamedFunction("main");
-            // engine.RunFunctionAsMain(main, 0, Array.Empty<string>(), Array.Empty<string>());
-        // }
-
-        using var linkProcess = System.Diagnostics.Process.Start("gcc", new[] { outFile }); // сборка exe
-
-        linkProcess.WaitForExit();
-        Console.WriteLine("Linked with standard library");
         Console.WriteLine("Тут начинается то, что выведет исполнение файла");
+        if (IsJitNeeded)
+        {
+            LLVM.LinkInMCJIT();
+            // //var engine = module.CreateExecutionEngine();
+            var engine = module.CreateMCJITCompiler();
 
-        using var runProcess = System.Diagnostics.Process.Start("a.exe"); // запуск
-
-        runProcess.WaitForExit();
+            var main = module.GetNamedFunction("main");
+            engine.RunFunctionAsMain(main, 0, Array.Empty<string>(), Array.Empty<string>());
+        }
         Console.WriteLine("Тут заканчивается то, что вывело исполнение файла");
+
+        // using var linkProcess = System.Diagnostics.Process.Start("gcc", new[] { outFile }); // сборка exe
+        // linkProcess.WaitForExit();
+        // Console.WriteLine("Linked with standard library");
+        //
+        // Console.WriteLine("Тут начинается то, что выведет исполнение файла");
+        // using var runProcess = System.Diagnostics.Process.Start("a.exe"); // запуск
+        // runProcess.WaitForExit();
+
         return 0;
     }
 }

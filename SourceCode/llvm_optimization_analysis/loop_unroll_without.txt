@@ -1,0 +1,141 @@
+LLVM IR
+=========
+; ModuleID = 'AbaScript'
+source_filename = "AbaScript"
+
+@0 = private unnamed_addr constant [6 x i8] c"%I64d\00", align 1
+
+define i32 @"$print"(i64 %x) {
+entry:
+  %0 = alloca i64, align 8
+  store i64 %x, ptr %0, align 4
+  %1 = bitcast i32 4096 to i32
+  %mallocsize = mul i32 %1, ptrtoint (ptr getelementptr (i8, ptr null, i32 1) to i32)
+  %malloccall = tail call ptr @malloc(i32 %mallocsize)
+  %2 = bitcast ptr %malloccall to ptr
+  %3 = load i64, ptr %0, align 4
+  %4 = call i32 (ptr, ptr, ...) @sprintf(ptr %2, ptr @0, i64 %3)
+  %5 = call i32 @puts(ptr %2)
+  tail call void @free(ptr %2)
+  ret i32 0
+declare i32 @puts(ptr)
+
+declare noalias ptr @malloc(i32)
+
+declare i32 @sprintf(ptr, ptr, ...)
+
+declare void @free(ptr)
+
+define i64 @main() {
+entry:
+  %0 = trunc i64 10 to i32
+  %mallocsize = mul i32 %0, ptrtoint (ptr getelementptr (i64, ptr null, i32 1) t
+                                                                               to i32)
+  %malloccall = tail call ptr @malloc(i32 %mallocsize)
+  %1 = bitcast ptr %malloccall to ptr
+  %abas = alloca i64, align 8
+  store ptr %1, ptr %abas, align 8
+  br label %forCond
+
+forCond:                                          ; preds = %forInc, %entry     
+  %i.0 = phi i64 [ 0, %entry ], [ %6, %forInc ]
+  %2 = icmp slt i64 %i.0, 10
+  br i1 %2, label %forBody, label %afterFor
+
+forBody:                                          ; preds = %forCond
+  %3 = sub i64 10, %i.0
+  %4 = load ptr, ptr %abas, align 8
+  %5 = getelementptr i64, ptr %4, i64 %i.0
+  store i64 %3, ptr %5, align 4
+  br label %forInc
+
+forInc:                                           ; preds = %forBody
+  %6 = add i64 %i.0, 1
+  br label %forCond
+
+afterFor:                                         ; preds = %forCond
+  %7 = sub i64 10, 1
+  br label %forCond1
+
+forCond1:                                         ; preds = %forInc3, %afterFor 
+  %i.1 = phi i64 [ %7, %afterFor ], [ %9, %forInc3 ]
+  %8 = icmp sle i64 0, %i.1
+  br i1 %8, label %forBody2, label %afterFor4
+
+forBody2:                                         ; preds = %forCond1
+  br label %forCond5
+
+forInc3:                                          ; preds = %afterFor8
+  %9 = sub i64 %i.1, 1
+  br label %forCond1
+
+afterFor4:                                        ; preds = %forCond1
+  br label %forCond9
+
+forCond5:                                         ; preds = %forInc7, %forBody2 
+  %j.0 = phi i64 [ 0, %forBody2 ], [ %19, %forInc7 ]
+  %10 = icmp slt i64 %j.0, %i.1
+  br i1 %10, label %forBody6, label %afterFor8
+
+forBody6:                                         ; preds = %forCond5
+  %11 = load ptr, ptr %abas, align 8
+  %12 = getelementptr i64, ptr %11, i64 %j.0
+  %13 = load i64, ptr %12, align 4
+  %14 = add i64 %j.0, 1
+  %15 = load ptr, ptr %abas, align 8
+  %16 = getelementptr i64, ptr %15, i64 %14
+  %17 = load i64, ptr %16, align 4
+  %18 = icmp slt i64 %17, %13
+  %ifcond = icmp ne i1 %18, false
+  br i1 %ifcond, label %then, label %else
+
+forInc7:                                          ; preds = %merge
+  %19 = add i64 %j.0, 1
+  br label %forCond5
+
+afterFor8:                                        ; preds = %forCond5
+  br label %forInc3
+
+then:                                             ; preds = %forBody6
+  %20 = load ptr, ptr %abas, align 8
+  %21 = getelementptr i64, ptr %20, i64 %j.0
+  %22 = load i64, ptr %21, align 4
+  %23 = add i64 %j.0, 1
+  %24 = load ptr, ptr %abas, align 8
+  %25 = getelementptr i64, ptr %24, i64 %23
+  %26 = load i64, ptr %25, align 4
+  %27 = load ptr, ptr %abas, align 8
+  %28 = getelementptr i64, ptr %27, i64 %j.0
+  store i64 %26, ptr %28, align 4
+  %29 = add i64 %j.0, 1
+  %30 = load ptr, ptr %abas, align 8
+  %31 = getelementptr i64, ptr %30, i64 %29
+  store i64 %22, ptr %31, align 4
+  br label %merge
+
+else:                                             ; preds = %forBody6
+  br label %merge
+
+merge:                                            ; preds = %else, %then        
+  br label %forInc7
+
+forCond9:                                         ; preds = %forInc11, %afterFor
+                                                                               r4
+  %i.2 = phi i64 [ 0, %afterFor4 ], [ %37, %forInc11 ]
+  %32 = icmp slt i64 %i.2, 10
+  br i1 %32, label %forBody10, label %afterFor12
+
+forBody10:                                        ; preds = %forCond9
+  %33 = load ptr, ptr %abas, align 8
+  %34 = getelementptr i64, ptr %33, i64 %i.2
+  %35 = load i64, ptr %34, align 4
+  %36 = call i32 @"$print"(i64 %35)
+  br label %forInc11
+
+forInc11:                                         ; preds = %forBody10
+  %37 = add i64 %i.2, 1
+  br label %forCond9
+
+afterFor12:                                       ; preds = %forCond9
+  ret i64 0
+}
