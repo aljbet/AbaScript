@@ -11,9 +11,11 @@ public partial class CompiledAbaScriptCompiler
         var id = context.ID().GetText();
         if (context.NUMBER() != null)
         {
-            // TODO: тут нет INIT
             var count = int.Parse(context.NUMBER().GetText());
-            CreateEmptyArray(id, count);
+            
+            _stringBuilder.AppendLine($"{Keywords.PUSH} {count}");
+            _stringBuilder.AppendLine($"{Keywords.INIT} {id}[] {context.type().GetText()}");
+
             return null;
         }
 
@@ -34,30 +36,21 @@ public partial class CompiledAbaScriptCompiler
         return context;
     }
 
-    private void CreateEmptyArray(string id, int count)
-    {
-        for (var i = 0; i < count; i++)
-        {
-            _stringBuilder.AppendLine($"{Keywords.PUSH} 0");
-            _stringBuilder.AppendLine($"{Keywords.STORE} {id}[{i}]");
-        }
-        
-        // TODO: понять, нужно ли это
-        // _variableStorage.SaveVariable(id, new ArrayVariable
-        // {
-        //     Value = new int[count]
-        // });
-    }
-
     public override object? VisitAssignment(AbaScriptParser.AssignmentContext context)
     {
-        // работает только с интами
-        if (context.expr().Length > 1)
+        if (context.expr().Length > 1) // array
         {
-            throw new RuntimeException("can't work with arrays yet");
+            var indexExpr = context.expr(0);
+            var valueExpr = context.expr(1);
+            Visit(valueExpr);
+            Visit(indexExpr);
+            _stringBuilder.AppendLine($"{Keywords.STORE} {context.ID()}[]");
         }
-        Visit(context.expr(0));
-        _stringBuilder.AppendLine($"{Keywords.STORE} {context.ID()}");
+        else
+        {
+            Visit(context.expr(0));
+            _stringBuilder.AppendLine($"{Keywords.STORE} {context.ID()}");
+        }
 
         return context;
     }
@@ -67,7 +60,9 @@ public partial class CompiledAbaScriptCompiler
         string variableName = context.ID().GetText();
         if (context.expr() != null) // array element
         {
-            throw new RuntimeException("can't work with arrays yet");
+            var indexExpr = context.expr();
+            Visit(indexExpr);
+            _stringBuilder.AppendLine($"{Keywords.LOAD} {variableName}[]");
         }
         else // int or array
         {
