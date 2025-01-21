@@ -9,7 +9,7 @@ public partial class CompiledAbaScriptInterpreter
     {
         var varName = context.varName().GetText();
         var isArray = varName.EndsWith("[]");
-        var idx = 0;
+        long idx = 0;
         if (isArray)
         {
             idx = _stack.Pop();
@@ -17,17 +17,17 @@ public partial class CompiledAbaScriptInterpreter
 
         // ищем нужное поле в куче
         List<string> fields = varName.Split('.').ToList();
-        int variableAddress = _variables[fields[0]].Peek().Address + idx;
-        int stackValue = _stackAddresses[variableAddress];
+        long variableAddress = _variables[fields[0]].Peek().Address + idx;
+        long stackValue = _stackAddresses[variableAddress];
         string lastClassName = _variables[fields[0]].Peek().Type;
         for (int i = 1; i < fields.Count; i++)
         {
-            for (int j = stackValue; j < stackValue + _classInfos[lastClassName].Fields.Count; j++)
+            for (long j = stackValue; j < stackValue + _classInfos[lastClassName].Fields.Count; j++)
             {
                 var fieldNum = j - stackValue;
-                if (fields[i] == _classInfos[lastClassName].Fields[fieldNum].Name)
+                if (fields[i] == _classInfos[lastClassName].Fields[(int) fieldNum].Name)
                 {
-                    if (SimpleTypes.IsSimple(_classInfos[lastClassName].Fields[fieldNum].Type))
+                    if (SimpleTypes.IsSimple(_classInfos[lastClassName].Fields[(int) fieldNum].Type))
                     {
                         stackValue = j;
                     }
@@ -36,7 +36,7 @@ public partial class CompiledAbaScriptInterpreter
                         stackValue = _heapAddresses[j];
                     }
 
-                    lastClassName = _classInfos[lastClassName].Fields[fieldNum].Type;
+                    lastClassName = _classInfos[lastClassName].Fields[(int) fieldNum].Type;
                     break;
                 }
             }
@@ -48,7 +48,7 @@ public partial class CompiledAbaScriptInterpreter
         }
         else
         {
-            _stack.Push(_heapAddresses[stackValue]);
+            _stack.Push(_heapAddresses[(int) stackValue]);
         }
         return null;
     }
@@ -59,7 +59,7 @@ public partial class CompiledAbaScriptInterpreter
         var className = context.className().GetText();
         StorageType variableStorageType = DetermineStorage(varName, className);
         var isArray = varName.EndsWith("[]");
-        var size = 1;
+        long size = 1;
         if (isArray)
         {
             size = _stack.Pop();
@@ -104,28 +104,28 @@ public partial class CompiledAbaScriptInterpreter
             throw new RuntimeException("Stack underflow during STORE");
         }
         var isArray = varName.EndsWith("[]");
-        var idx = 0;
+        long idx = 0;
         if (isArray)
         {
             idx = _stack.Pop();
         }
 
-        var oldValue = 0;
-        var newValue = 0;
+        long oldValue = 0;
+        long newValue = 0;
         
         List<string> fields = varName.Split('.').ToList();
-        int variableAddress = _variables[fields[0]].Peek().Address + idx;
-        int stackValue = _stackAddresses[variableAddress];
+        long variableAddress = _variables[fields[0]].Peek().Address + idx;
+        long stackValue = _stackAddresses[variableAddress];
         string lastClassName = _variables[fields[0]].Peek().Type;
         // ищем нужное поле в куче и присваиваем ему значение
         for (int i = 1; i < fields.Count; i++)
         {
-            for (int j = stackValue; j < stackValue + _classInfos[lastClassName].Fields.Count; j++)
+            for (long j = stackValue; j < stackValue + _classInfos[lastClassName].Fields.Count; j++)
             {
                 var fieldNum = j - stackValue;
-                if (fields[i] == _classInfos[lastClassName].Fields[fieldNum].Name)
+                if (fields[i] == _classInfos[lastClassName].Fields[(int) fieldNum].Name)
                 {
-                    if (SimpleTypes.IsSimple(_classInfos[lastClassName].Fields[fieldNum].Type) || i == fields.Count - 1)
+                    if (SimpleTypes.IsSimple(_classInfos[lastClassName].Fields[(int) fieldNum].Type) || i == fields.Count - 1)
                     {
                         stackValue = j;
                     }
@@ -134,7 +134,7 @@ public partial class CompiledAbaScriptInterpreter
                         stackValue = _heapAddresses[j];
                     }
 
-                    lastClassName = _classInfos[lastClassName].Fields[fieldNum].Type;
+                    lastClassName = _classInfos[lastClassName].Fields[(int) fieldNum].Type;
                     break;
                 }
             }

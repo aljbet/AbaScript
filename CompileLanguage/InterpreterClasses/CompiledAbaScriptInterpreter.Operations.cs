@@ -47,7 +47,7 @@ public partial class CompiledAbaScriptInterpreter
     public override object? VisitGeInstruction(CompiledAbaScriptParser.GeInstructionContext context) =>
         PerformBinaryOperation((a, b) => (a >= b) ? 1 : 0);
 
-    private object? PerformBinaryOperation(Func<int, int, int> operation)
+    private object? PerformBinaryOperation(Func<long, long, long> operation)
     {
         if (_stack.Count < 2)
         {
@@ -60,7 +60,7 @@ public partial class CompiledAbaScriptInterpreter
         return null;
     }
     
-    private object? PerformUnaryOperation(Func<int, int> operation)
+    private object? PerformUnaryOperation(Func<long, long> operation)
     {
         if (_stack.Count < 1)
         {

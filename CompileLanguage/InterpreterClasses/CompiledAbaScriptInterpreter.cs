@@ -7,13 +7,13 @@ namespace CompileLanguage.InterpreterClasses;
 public partial class CompiledAbaScriptInterpreter : CompiledAbaScriptBaseVisitor<object?>
 {
     private readonly Dictionary<string, int> _labels = new();
-    private readonly Stack<int> _stack = new();
+    private readonly Stack<long> _stack = new();
     private readonly Dictionary<string, Stack<Variable>> _variables = new(); // храним информацию о переменных в стеке (инстансы классов это указатели на кучу)
     private readonly Stack<int> _functionCalls = new();
     private IList<CompiledAbaScriptParser.StatementContext> _statements;
-    private Dictionary<int, int> _heapAddresses = new(); // адресное пространство кучи
-    Dictionary<int, int> _stackAddresses = new();        // адресное пространство стека
-    Dictionary<int, int> _linkCounter = new();           // счётчик ссылок
+    private Dictionary<long, long> _heapAddresses = new(); // адресное пространство кучи
+    Dictionary<long, long> _stackAddresses = new();        // адресное пространство стека
+    Dictionary<long, long> _linkCounter = new();           // счётчик ссылок
     private Stack<int> _scopeStack = new();
     private int _stackTop;
     private int _heapTop;

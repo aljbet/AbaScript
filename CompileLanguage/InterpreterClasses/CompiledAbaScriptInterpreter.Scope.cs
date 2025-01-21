@@ -58,7 +58,7 @@ public partial class CompiledAbaScriptInterpreter
         return null;
     }
 
-    public void DeleteHeapObject(string type, int address)
+    public void DeleteHeapObject(string type, long address)
     {
         // нет потребности удалять объект, если counter ненулевой
         _linkCounter[address]--;
@@ -68,13 +68,13 @@ public partial class CompiledAbaScriptInterpreter
         }
         
         // проходим по всем полям класса и чистим 
-        for (int i = address; i < _classInfos[type].Fields.Count + address; i++)
+        for (long i = address; i < _classInfos[type].Fields.Count + address; i++)
         {
             var heapObject = _heapAddresses[i];
-            if (!SimpleTypes.IsSimple(_classInfos[type].Fields[i - address].Type))
+            if (!SimpleTypes.IsSimple(_classInfos[type].Fields[(int) (i - address)].Type))
             {
                 // в данном случае heapObject это указатель на другой объект в heap
-                DeleteHeapObject(_classInfos[type].Fields[i - address].Type, heapObject);
+                DeleteHeapObject(_classInfos[type].Fields[(int) (i - address)].Type, heapObject);
             }
             // тут чистим само поле, его в любом случае надо чистить, так как это либо указатель на объект в heap, либо простой объект
             _heapAddresses.Remove(i);
