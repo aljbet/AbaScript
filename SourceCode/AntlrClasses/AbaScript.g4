@@ -2,7 +2,7 @@
 
 // Точка входа
 script
-    : (statement | functionDef | classDef)* EOF
+    : (functionDef | classDef)* EOF
     ;
 
 // ---------------------
