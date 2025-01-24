@@ -1,4 +1,4 @@
-﻿namespace CompileLanguage.CompileClasses;
+﻿namespace CompileLanguage;
 
 public static class Keywords
 {
@@ -29,4 +29,7 @@ public static class Keywords
     public const string ENTER_SCOPE = "ENTER_SCOPE";
     public const string EXIT_SCOPE = "EXIT_SCOPE";
     public const string INIT = "INIT";
+    public const string FOR_LABEL = "for_label_";
+    public const string FOR_LOGIC_LABEL = "for_logic_label_";
+    public const string FOR_END_LABEL = "for_end_label_";
 }

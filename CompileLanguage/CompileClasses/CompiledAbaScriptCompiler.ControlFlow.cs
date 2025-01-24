@@ -33,9 +33,9 @@ public partial class CompiledAbaScriptCompiler
 
     public override object VisitForStatement(AbaScriptParser.ForStatementContext context)
     {
-        var forBlockLabel = "for_label_" + _forBlocksCount;
-        var forLogicLabel = "for_logic_label" + _forBlocksCount;
-        var forEndBlockLabel = "for_end_label_" + _forBlocksCount;
+        var forBlockLabel = Keywords.FOR_LABEL + _forBlocksCount;
+        var forLogicLabel = Keywords.FOR_LOGIC_LABEL + _forBlocksCount;
+        var forEndBlockLabel = Keywords.FOR_END_LABEL + _forBlocksCount;
         _forBlocksCount++;
 
         _stringBuilder.AppendLine(Keywords.ENTER_SCOPE);
