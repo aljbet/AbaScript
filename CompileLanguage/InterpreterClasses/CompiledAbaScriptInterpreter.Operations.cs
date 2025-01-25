@@ -18,7 +18,7 @@ public partial class CompiledAbaScriptInterpreter
         PerformBinaryOperation((a, b) => a / b);
 
     public override object? VisitModInstruction(CompiledAbaScriptParser.ModInstructionContext context) =>
-        PerformBinaryOperation((a, b) => a % b);
+        PerformBinaryOperation((a, b) => b == 0 ? 0 : a % b);
 
     public override object? VisitAndInstruction(CompiledAbaScriptParser.AndInstructionContext context) =>
         PerformBinaryOperation((a, b) => a & b);

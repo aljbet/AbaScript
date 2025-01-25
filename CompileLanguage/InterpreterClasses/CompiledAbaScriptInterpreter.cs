@@ -7,7 +7,7 @@ namespace CompileLanguage.InterpreterClasses;
 
 public partial class CompiledAbaScriptInterpreter : CompiledAbaScriptBaseVisitor<object?>
 {
-    private readonly Dictionary<string, int> _labels = new();
+    private Dictionary<string, int> _labels = new();
     private readonly Stack<long> _stack = new();
 
     private readonly Dictionary<string, Stack<Variable>>
@@ -23,18 +23,7 @@ public partial class CompiledAbaScriptInterpreter : CompiledAbaScriptBaseVisitor
     private int _heapTop;
     private int _commandPos;
     private int _startPos;
-    private Dictionary<string, IList<CompiledAbaScriptParser.StatementContext>> _optimizationCache = new();
-
-    /* private надо где-то хранить функции, к которым потом применится оптимизация.
-     в каком виде? участок колбасы
-     что такое участок колбасы? две ссылки: нода с которой все начинается (enter_scope) и которой все заканчивается (exit)
-     они остаются, а то что между ними можно поменять.
-     сначала придумываем, как поменять, потом возвращаемся в начало и исполняем
-
-     чтобы создать участок колбасы надо создать полноценный узел контекста.
-     надо понять, что вообще входит в узел :(
-
-    */
+    private Dictionary<string, BlockInfo> _optimizationCache = new();
 
     private Dictionary<String, ClassInfo> _classInfos;
 
@@ -66,34 +55,40 @@ public partial class CompiledAbaScriptInterpreter : CompiledAbaScriptBaseVisitor
             }
         }
 
-        ExecuteStatements();
+        var block = new BlockInfo(_labels, _statements, input.Split("\r\n"));
+        RunBlock(block, true, _startPos);
+
+        //ExecuteStatements();
     }
 
-    private void ExecuteStatements()
-    {
-        for (_commandPos = _startPos; _commandPos < _statements.Count; _commandPos++)
-        {
-            if (_statements[_commandPos].label() != null)
-            {
-                // возможно нужна оптимизация
-                var curLabel = _statements[_commandPos].label().GetText();
-                if (Regex.IsMatch(curLabel, Keywords.FOR_LABEL) &&
-                    _statements[_commandPos - 2].GetText() == Keywords.LT)
-                {
-                    LoopUnroll(curLabel);
-                }
-                // else if ()
-                // {
-                    
-                // }
-            }
-
-            Visit(_statements[_commandPos]);
-            if (_jumpDestination != -1)
-            {
-                _commandPos = _jumpDestination - 1;
-                _jumpDestination = -1;
-            }
-        }
-    }
+    // private void ExecuteStatements()
+    // {
+    //     for (_commandPos = _startPos; _commandPos < _statements.Count; _commandPos++)
+    //     {
+    //         if (_statements[_commandPos].label() != null)
+    //         {
+    //             // возможно нужна оптимизация
+    //             var curLabel = _statements[_commandPos].label().GetText();
+    //             if (Regex.IsMatch(curLabel, Keywords.FOR_LABEL) &&
+    //                 _statements[_commandPos - 2].GetText() == Keywords.LT)
+    //             {
+    //                 LoopUnroll(curLabel);
+    //                 continue;
+    //             }
+    //             // else if ()
+    //             // {
+    //                 
+    //             // }
+    //         }
+    //         // 29886
+    //         // 14945
+    //
+    //         Visit(_statements[_commandPos]);
+    //         if (_jumpDestination != -1)
+    //         {
+    //             _commandPos = _jumpDestination - 1;
+    //             _jumpDestination = -1;
+    //         }
+    //     }
+    // }
 }
