@@ -158,7 +158,7 @@ ENTER_SCOPE: 'ENTER_SCOPE';
 EXIT_SCOPE: 'EXIT_SCOPE';
 INIT: 'INIT';
 
-ID  : [a-zA-Z_][a-zA-Z0-9_]*('['']')?;
+ID  : [a-zA-Z_][a-zA-Z0-9_$]*('['']')?;
 NUMBER : [0-9]+ ;
 STRING : '"' ('\\"'|.)*? '"';
 

@@ -23,6 +23,7 @@ public partial class CompiledAbaScriptInterpreter : CompiledAbaScriptBaseVisitor
     private int _heapTop;
     private int _commandPos;
     private int _startPos;
+    private int _uniqueIndex;
     private Dictionary<string, BlockInfo> _optimizationCache = new();
 
     private Dictionary<String, ClassInfo> _classInfos;
@@ -57,38 +58,51 @@ public partial class CompiledAbaScriptInterpreter : CompiledAbaScriptBaseVisitor
 
         var block = new BlockInfo(_labels, _statements, input.Split("\r\n"));
         RunBlock(block, true, _startPos);
-
-        //ExecuteStatements();
     }
 
-    // private void ExecuteStatements()
-    // {
-    //     for (_commandPos = _startPos; _commandPos < _statements.Count; _commandPos++)
-    //     {
-    //         if (_statements[_commandPos].label() != null)
-    //         {
-    //             // возможно нужна оптимизация
-    //             var curLabel = _statements[_commandPos].label().GetText();
-    //             if (Regex.IsMatch(curLabel, Keywords.FOR_LABEL) &&
-    //                 _statements[_commandPos - 2].GetText() == Keywords.LT)
-    //             {
-    //                 LoopUnroll(curLabel);
-    //                 continue;
-    //             }
-    //             // else if ()
-    //             // {
-    //                 
-    //             // }
-    //         }
-    //         // 29886
-    //         // 14945
-    //
-    //         Visit(_statements[_commandPos]);
-    //         if (_jumpDestination != -1)
-    //         {
-    //             _commandPos = _jumpDestination - 1;
-    //             _jumpDestination = -1;
-    //         }
-    //     }
-    // }
+    private void RunBlock(BlockInfo block, bool isJitNeeded, int startPos=0)
+    {
+        var oldLabels = _labels;
+        _labels = block.Labels;
+        for (var i = startPos; i < block.Statements.Count; i++)
+        {
+            _commandPos = i;
+            if (isJitNeeded)
+            {
+                if (block.Statements[i].label() != null)
+                {
+                    var curLabel = _statements[i].label().GetText();
+                    if (Regex.IsMatch(curLabel, Keywords.FOR_LABEL)) // возможно можем оптимизировать
+                    {
+                        var numberFor = curLabel.Substring(Keywords.FOR_LABEL.Length,
+                            curLabel.Length - Keywords.FOR_LABEL.Length - 1);
+                        
+                        if (_optimizationCache.ContainsKey(curLabel))
+                        {
+                            RunBlock(_optimizationCache[curLabel], false);
+                            i = block.Labels[Keywords.FOR_END_LABEL + numberFor];
+                            continue;
+                        }
+                        if (IsPossibleToUnroll(numberFor, block))
+                        {
+                            var jitBlock = Unroll(numberFor, block);
+                            _optimizationCache.Add(curLabel, jitBlock);
+
+                            RunBlock(jitBlock, false);
+                            i = block.Labels[Keywords.FOR_END_LABEL + numberFor];
+                            continue;
+                        }
+                    }
+                }
+            }
+
+            Visit(block.Statements[i]);
+            if (_jumpDestination != -1)
+            {
+                i = _jumpDestination - 1;
+                _jumpDestination = -1;
+            }
+        }
+        _labels = oldLabels;
+    }
 }
